@@ -1,0 +1,123 @@
+================================================================================
+  MENÚS Y ARQUITECTURA SERVIDOR LOCAL — Videojuego 3D de Simulación Realista
+================================================================================
+  Referencia: contexto/resumen.txt para visión general del proyecto.
+================================================================================
+
+Este archivo describe los menús clásicos del juego y la forma de ejecución
+mediante servidor local (sin multijugador por ahora). La arquitectura
+elegida facilita un posible futuro modo cooperativo o multijugador.
+
+--------------------------------------------------------------------------------
+1. MENÚS CLÁSICOS
+--------------------------------------------------------------------------------
+El juego debe incluir los menús habituales de un juego singleplayer:
+
+• Menú principal (al iniciar el juego)
+  - Iniciar partida (nueva o cargar).
+  - Cargar partida (lista de partidas guardadas).
+  - Opciones / Ajustes (gráficos, audio, controles, etc.).
+  - Salir del juego.
+  
+  **IMPLEMENTADO**: Menú principal funcional con:
+  - Botón "Nueva Partida" que inicia el juego
+  - Botón "Salir" que cierra la aplicación
+  - Sistema de logging para depuración
+
+• Durante la partida (menú de pausa / escape)
+  - Reanudar.
+  - Guardar partida.
+  - Cargar partida (opcional; puede volver al menú principal para cargar).
+  - Opciones.
+  - Volver al menú principal (con confirmación; opción de guardar antes).
+  - Salir del juego (con confirmación; opción de guardar antes).
+  
+  **IMPLEMENTADO**: Menú de pausa funcional con:
+  - Tecla ESC para mostrar/ocultar
+  - Botón SALIR que vuelve al menú principal
+  - Bloqueo de cámara y movimiento del jugador
+  - El juego NO se pausa (continúa ejecutándose)
+  - Cursor visible para interactuar con el menú
+
+• Guardado y cargado de partidas
+  - Guardar: persistir estado del mundo, jugador, inventario, progreso,
+    etc., en disco (uno o varios slots o archivos por partida).
+  - Cargar: restaurar una partida guardada y continuar desde ese estado.
+  - Detalles a definir: formato de guardado, número de slots, nombres
+    de partida, fecha/hora del guardado, posible autoguardado.
+
+• Iniciar partida
+  - Nueva partida: mundo nuevo (generación procedural o semilla), jugador
+    en estado inicial.
+  - Cargar partida: ver "Guardado y cargado de partidas".
+  
+  **IMPLEMENTADO**: Sistema de inicio de partida con:
+  - GameFlow que gestiona el flujo entre menús
+  - Escena GameWorld con movimiento FPS básico
+  - Sistema de coordenadas en pantalla
+  - Transición menú principal → partida
+
+Detalles a definir por menú: flujo exacto, textos, idiomas, accesibilidad,
+teclas por defecto.
+
+--------------------------------------------------------------------------------
+2. MULTIJUGADOR (ESTADO ACTUAL)
+--------------------------------------------------------------------------------
+• Por el momento el juego NO tendrá modo multijugador.
+• Todo el diseño de menús y flujo es para un solo jugador en una sola
+  instancia de partida.
+
+--------------------------------------------------------------------------------
+3. ARQUITECTURA: SERVIDOR LOCAL + CLIENTE
+--------------------------------------------------------------------------------
+Aunque no haya multijugador, el juego se ejecutará de la siguiente forma:
+
+• Se crea una instancia de servidor local (en la misma máquina).
+• El jugador se "une" a ese servidor local como si fuera un cliente.
+• Toda la lógica de partida (mundo, entidades, jugador, recursos, etc.)
+  vive en el servidor; el cliente muestra y envía inputs.
+• Al cerrar la partida, el servidor local se cierra y el flujo vuelve
+  al menú principal (o sale del juego).
+
+Ventajas de este enfoque:
+• La lógica de juego está centralizada en el servidor desde el inicio.
+• Un posible futuro modo cooperativo o multijugador se reduce a:
+  - Permitir que el servidor escuche en red (o que otros se conecten),
+  - Mantener la misma lógica de servidor; solo cambia quién se conecta.
+• Patrón similar al usado por Minecraft (servidor local + cliente local
+  en singleplayer), lo que simplifica mucho una futura extensión a
+  multijugador sin reescribir la arquitectura.
+
+Resumen ejecutivo:
+  "Una partida = servidor local activo + un cliente (el jugador) conectado.
+   Fin de partida = desconectar cliente + cerrar servidor local."
+
+--------------------------------------------------------------------------------
+4. FLUJO RESUMIDO
+--------------------------------------------------------------------------------
+• Inicio del juego → Menú principal.
+• "Nueva partida" o "Cargar partida" → Arrancar servidor local → Conectar
+  cliente local → Entrar al mundo (generado o cargado).
+• Durante la partida: guardar = pedir al servidor que persista estado;
+  cargar = cerrar sesión actual, arrancar servidor con estado cargado,
+  reconectar cliente.
+• "Volver al menú principal" / "Salir partida" → Desconectar cliente,
+  cerrar servidor local → Volver al menú principal (o salir del juego).
+
+--------------------------------------------------------------------------------
+5. DETALLES A DEFINIR (PARA IMPLEMENTACIÓN)
+--------------------------------------------------------------------------------
+• En Godot: uso de nodos/escenas para servidor vs cliente, cómo se
+  instancia el "servidor local", en qué puerto o canal se comunica
+  el cliente local.
+• Formato y ubicación de los archivos de guardado (carpeta, extensión,
+  uno o varios archivos por partida).
+• Si el menú principal es una escena sin servidor, y el servidor se
+  levanta solo al entrar en una partida.
+• Cómo se reparten responsabilidades: autoridad del servidor en mundo
+  y entidades; cliente solo envía input y recibe estado para renderizar.
+
+================================================================================
+  Para implementación: descomponer menús y flujo servidor/cliente en tareas
+  pequeñas y pseudocódigo. Ver resumen.txt (estrategia divide y vencerás).
+================================================================================

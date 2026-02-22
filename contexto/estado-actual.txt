@@ -1,0 +1,57 @@
+# Estado Actual del Proyecto Wild - 22/02/2026
+
+## ✅ Hitos Importantes Logrados
+
+### Menús y Navegación
+- **Menú principal funcional** con botones Nueva Partida y Salir
+- **Menú de pausa completamente implementado** con ESC
+- **Botón SALIR funcional** que vuelve al menú principal
+- **Bloqueo de cámara y movimiento** durante el menú de pausa
+- **Flujo de juego centralizado** en GameFlow autoload
+- **El juego NO se pausa** (continúa ejecutándose) - diseño intencional
+
+### Escena de Juego Funcional
+- **GameWorld.cs** implementado con movimiento FPS completo
+- **Controles WASD + Mouse** funcionando correctamente
+- **UI de coordenadas** activa y mostrando posición/ángulos
+- **Suelo verde básico** con cámara y luz direccional
+- **Sistema de congelación/descongelación** del jugador y cámara
+
+### Sistema de Backups Automatizado
+- **backup.ps1** completamente funcional
+- **Backups con timestamp y motivo** personalizado
+- **Restauración automática** del backup más reciente
+- **Integración con latest.log** para registro de acciones
+- **Último backup:** 20260222_205629_menu_pausa_fix
+
+### Estado Técnico
+- **Godot 4.6.1** configurado y funcionando
+- **C# .NET 8.0** compilando correctamente
+- **Sistema de logging** con Logger.cs y latest.log
+- **Sin bucles infinitos** ni bloqueos en el menú de pausa
+- **Scripts principales** sin errores de compilación
+
+### Próximos Pasos
+1. **Menú de Opciones** (gráficos, audio, controles)
+2. **Sistema de guardado/carga** de partidas
+3. **Menú de Cargar Partida** con lista de slots
+4. **Terreno procedural** usando algoritmos
+5. **Mecánicas básicas** (salud, estamina, inventario)
+
+## 🎮 Estado Actual: MENÚS COMPLETOS Y ESTABLES
+
+El proyecto tiene un sistema de menús completo y funcional. El menú de pausa funciona correctamente sin bloquear el juego y con la cámara adecuadamente controlada.
+
+## 📦 Último Backup
+- **Fecha:** 22/02/2026 20:56:29
+- **Motivo:** menu_pausa_fix
+- **Archivos:** 6 archivos críticos + metadatos
+- **Formato:** ZIP comprimido
+
+## 📋 Sistema de Backups
+- **Control total:** Solo tú decides cuándo hacer backup
+- **Comandos disponibles:**
+  - `powershell -ExecutionPolicy Bypass -File backup.ps1 create "motivo"` - Crear backup
+  - `powershell -ExecutionPolicy Bypass -File backup.ps1 restore` - Restaurar último backup
+- **Sin automatización:** No más backups automáticos
+- **Sin conflictos:** Formato ZIP evita duplicados de Godot

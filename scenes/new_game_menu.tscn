@@ -1,0 +1,134 @@
+[gd_scene load_steps=4 format=3 uid="uid://new_game_menu"]
+
+[ext_resource type="Script" path="res://scripts/NewGameMenu.cs" id="1_ngm"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.12, 0.14, 0.18, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.38, 0.45, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_line"]
+bg_color = Color(0.18, 0.2, 0.24, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="NewGameMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ngm")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.1, 0.14, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 40
+theme_override_constants/margin_top = 40
+theme_override_constants/margin_right = 40
+theme_override_constants/margin_bottom = 40
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/Panel/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.85, 0.7, 1)
+theme_override_font_sizes/font_size = 32
+text = "Nueva partida"
+horizontal_alignment = 1
+
+[node name="Spacer1" type="Control" parent="CenterContainer/Panel/MarginContainer/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+
+[node name="LabelSeed" type="Label" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+text = "Semilla del mundo"
+
+[node name="GridSeed" type="HBoxContainer" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EditSeed" type="LineEdit" parent="CenterContainer/Panel/MarginContainer/VBox/GridSeed"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Vacío = aleatorio"
+
+[node name="ButtonRandomSeed" type="Button" parent="CenterContainer/Panel/MarginContainer/VBox/GridSeed"]
+layout_mode = 2
+text = "Aleatorio"
+
+[node name="LabelCharacter" type="Label" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+text = "Nombre del personaje"
+
+[node name="EditCharacterName" type="LineEdit" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+placeholder_text = "Ej: Alex"
+
+[node name="LabelGender" type="Label" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+text = "Género"
+
+[node name="OptionGender" type="OptionButton" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(200, 0)
+
+[node name="LabelWorld" type="Label" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+text = "Nombre del mundo"
+
+[node name="EditWorldName" type="LineEdit" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+placeholder_text = "Ej: Mi isla"
+
+[node name="Spacer2" type="Control" parent="CenterContainer/Panel/MarginContainer/VBox"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="CenterContainer/Panel/MarginContainer/VBox"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="ButtonCreate" type="Button" parent="CenterContainer/Panel/MarginContainer/VBox/Buttons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Crear partida"
+
+[node name="ButtonBack" type="Button" parent="CenterContainer/Panel/MarginContainer/VBox/Buttons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Volver"

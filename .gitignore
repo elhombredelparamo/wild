@@ -1,0 +1,25 @@
+# Godot ignores
+.godot/
+import/
+export/
+*.tmp
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+*.user
+
+# Build outputs
+bin/
+obj/
+
+# Backup files
+backups/
+*.zip
+
+# OS files
+desktop.ini

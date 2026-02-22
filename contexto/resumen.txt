@@ -1,0 +1,72 @@
+================================================================================
+  RESUMEN DEL PROYECTO — Videojuego 3D de Simulación Realista
+================================================================================
+
+OBJETIVO GENERAL
+----------------
+Desarrollar un videojuego 3D de simulación realista con generación procedural,
+pensado para desarrollo iterativo y adaptable a distintos tipos de ordenadores.
+El proyecto usa el motor Godot y el lenguaje C#.
+
+PILARES DEL PROYECTO
+--------------------
+• Simulación realista: mecánicas, física y comportamiento coherente con la idea
+  de “realismo” que se defina para el juego.
+• Generación procedural: contenido (terreno, objetos, eventos, etc.) generado
+  por reglas y algoritmos, no solo por datos fijos.
+• Desarrollo iterativo: avance por ciclos pequeños (divide y vencerás), con
+  pseudocódigo hasta que cada tarea sea tan pequeña que una IA pueda rellenarla
+  con código final sin perder contexto.
+• Adaptabilidad: el juego debe poder ejecutarse en una variedad de equipos
+  (bajo, medio y alto rendimiento), ajustando calidad gráfica y complejidad
+  según el hardware.
+
+TECNOLOGÍAS
+-----------
+• Motor: Godot (versión a definir según estabilidad de C#).
+• Lenguaje: C# (scripting en Godot).
+• Plataforma objetivo: PC (Windows como referencia; otras según se decida).
+
+ESTRATEGIA DE DESARROLLO: DIVIDE Y VENCERÁS
+-------------------------------------------
+1. Se descomponen las funcionalidades en tareas más pequeñas.
+2. Cada tarea se describe primero en pseudocódigo o especificación clara.
+3. Cuando una tarea es suficientemente pequeña y concisa, se implementa el
+   código final (manual o asistido por IA).
+4. La carpeta "contexto" guarda archivos de texto con información de contexto
+   para que cualquier conversación o “motor de desarrollo” de IA pueda
+   entender el proyecto sin revisar todo el código.
+
+CARPETA "CONTEXTO"
+-----------------
+En la carpeta "contexto" se almacenan:
+• resumen.txt (este archivo): visión general del proyecto. Sirve para que una
+  conversación nueva pueda “leer el resumen” y adquirir el contexto básico
+  sin entrar en detalles técnicos profundos.
+• mecanicas.txt: descripción de las mecánicas del juego (recolección,
+  crafteo, construcción, inventario, salud, estamina, nutrición,
+  hidratación, temperatura corporal).
+• menus-y-servidor.txt: menús clásicos (guardar/cargar, iniciar partida,
+  opciones, etc.) y arquitectura servidor local + cliente (sin multijugador
+  por ahora; facilita futuro cooperativo/multijugador, estilo Minecraft).
+• estructura-inicial.txt: estructura de carpetas y archivos de la construcción
+  básica inicial del juego (Godot 4 + C#), flujo menú/partida y requisitos.
+• Otros archivos de texto que se irán añadiendo con detalles técnicos,
+  convenciones, glosario, estado del proyecto, etc., según haga falta.
+
+CÓMO USAR ESTE RESUMEN
+----------------------
+En una conversación nueva de contexto, se puede indicar: “lee el resumen.txt”
+(o “lee contexto/resumen.txt”). Con eso, la IA obtiene:
+- Qué es el proyecto (juego 3D, simulación realista, procedural).
+- Con qué se hace (Godot, C#).
+- Cómo se desarrolla (iterativo, divide y vencerás, pseudocódigo primero).
+- Dónde está el contexto extra (carpeta contexto).
+
+Los detalles técnicos, arquitectura y tareas concretas vivirán en otros
+archivos de "contexto" y en el propio código; este resumen solo da la base
+para entender el proyecto de un vistazo.
+
+================================================================================
+  Última actualización conceptual: 2026-02-22 - Menús implementados y funcionando
+================================================================================

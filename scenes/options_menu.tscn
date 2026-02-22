@@ -1,0 +1,171 @@
+[gd_scene load_steps=4 format=3 uid="uid://options_menu"]
+
+[ext_resource type="Script" path="res://scripts/OptionsMenu.cs" id="1_opt"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_left"]
+bg_color = Color(0.1, 0.12, 0.16, 1)
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+border_width_left = 0
+border_width_top = 0
+border_width_right = 1
+border_width_bottom = 0
+border_color = Color(0.3, 0.33, 0.4, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_content"]
+bg_color = Color(0.08, 0.09, 0.12, 0.95)
+corner_radius_top_left = 8
+corner_radius_bottom_left = 8
+
+[node name="OptionsMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_opt")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.06, 0.08, 0.1, 1)
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="PanelLeft" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(220, 0)
+theme_override_styles/panel = SubResource("StyleBoxFlat_left")
+
+[node name="VBox" type="VBoxContainer" parent="HBox/PanelLeft"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="LabelTitle" type="Label" parent="HBox/PanelLeft/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.82, 0.75, 1)
+theme_override_font_sizes/font_size = 20
+text = "Opciones"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="HBox/PanelLeft/VBox"]
+layout_mode = 2
+
+[node name="ButtonControls" type="Button" parent="HBox/PanelLeft/VBox"]
+layout_mode = 2
+text = "Controles"
+
+[node name="ButtonGraphics" type="Button" parent="HBox/PanelLeft/VBox"]
+layout_mode = 2
+text = "Gráficos"
+
+[node name="Spacer" type="Control" parent="HBox/PanelLeft/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ButtonBack" type="Button" parent="HBox/PanelLeft/VBox"]
+layout_mode = 2
+text = "Volver"
+
+[node name="PanelContent" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/panel = SubResource("StyleBoxFlat_content")
+
+[node name="Margin" type="MarginContainer" parent="HBox/PanelContent"]
+layout_mode = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="ContentStack" type="VBoxContainer" parent="HBox/PanelContent/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="PanelControls" type="Control" parent="HBox/PanelContent/Margin/ContentStack"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBox" type="VBoxContainer" parent="HBox/PanelContent/Margin/ContentStack/PanelControls"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="TitleControls" type="Label" parent="HBox/PanelContent/Margin/ContentStack/PanelControls/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.85, 0.7, 1)
+theme_override_font_sizes/font_size = 24
+text = "Controles"
+
+[node name="LabelMove" type="Label" parent="HBox/PanelContent/Margin/ContentStack/PanelControls/VBox"]
+layout_mode = 2
+text = "Movimiento: WASD"
+
+[node name="LabelJump" type="Label" parent="HBox/PanelContent/Margin/ContentStack/PanelControls/VBox"]
+layout_mode = 2
+text = "Saltar: ESPACIO"
+
+[node name="LabelCrouch" type="Label" parent="HBox/PanelContent/Margin/ContentStack/PanelControls/VBox"]
+layout_mode = 2
+text = "Agacharse: CTRL"
+
+[node name="PanelGraphics" type="Control" parent="HBox/PanelContent/Margin/ContentStack"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBox" type="VBoxContainer" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="TitleGraphics" type="Label" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.85, 0.7, 1)
+theme_override_font_sizes/font_size = 24
+text = "Gráficos"
+
+[node name="RenderRow" type="HBoxContainer" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="LabelRenderDesc" type="Label" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics/VBox/RenderRow"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "Distancia de renderizado (metros):"
+
+[node name="SpinRenderDistance" type="SpinBox" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics/VBox/RenderRow"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+min_value = 25.0
+max_value = 500.0
+value = 150.0
+step = 5.0
+allow_greater = false
+allow_lesser = false
+
+[node name="LabelRenderValue" type="Label" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics/VBox/RenderRow"]
+layout_mode = 2
+size_flags_vertical = 1
+text = "150 m"

@@ -1,0 +1,90 @@
+# CHANGELOG - Wild - Videojuego 3D de Simulación Realista
+
+## Versión 0.1.0-ALPHA
+**Fecha:** 2026-02-22  
+**Estado:** Alpha funcional
+
+---
+
+### 🎮 MENÚS Y NAVEGACIÓN
+- ✅ **Menú principal** con botones "Nueva Partida" y "Salir"
+- ✅ **Menú de pausa** funcional con tecla ESC
+- ✅ **Botón SALIR** del menú de pausa que vuelve al menú principal
+- ✅ **Bloqueo de cámara y movimiento** durante el menú de pausa
+- ✅ **Sistema de flujo** centralizado en GameFlow autoload
+- ✅ **Splash screen** personalizado con imagen y transiciones suaves
+
+### 🌍 ESCENA DE JUEGO
+- ✅ **GameWorld** con movimiento FPS básico (WASD + mouse)
+- ✅ **UI de coordenadas** en pantalla mostrando posición y ángulos
+- ✅ **Terreno básico** con suelo verde para referencia
+- ✅ **Sistema de congelación/descongelación** del jugador y cámara
+
+### 🛠️ SISTEMAS TÉCNICOS
+- ✅ **Sistema de logging** con Logger.cs y archivo latest.log
+- ✅ **Sistema de backup** completo y automatizado
+- ✅ **Configuración de proyecto** Godot 4.6.1 + C# .NET 8.0
+- ✅ **Resolución 1920x1080** con modo viewport
+- ✅ **Autoloads** configurados (GameFlow, SessionData, GameSettings)
+
+### 📁 ESTRUCTURA DE ARCHIVOS
+```
+wild/
+├── assets/ui/              # Imágenes de UI (splash.png)
+├── scenes/                # Escenas del juego
+│   ├── main_menu.tscn
+│   ├── game_world.tscn
+│   ├── pause_menu.tscn
+│   └── splash_screen.tscn
+├── scripts/               # Scripts C#
+│   ├── autoload/         # Scripts globales
+│   ├── GameWorld.cs
+│   ├── MainMenu.cs
+│   ├── PauseMenu.cs
+│   └── SplashScreen.cs
+├── contexto/              # Documentación del proyecto
+├── shaders/               # Shaders personalizados
+└── backups/               # Sistema de backups
+```
+
+### 🎯 CARACTERÍSTICAS IMPLEMENTADAS
+- **Menú de pausa sin pausar el juego** (diseño intencional)
+- **Transiciones suaves** con fade-in/out de 1 segundo
+- **Opción de saltar splash screen** con cualquier tecla/clic
+- **Sistema de coordenadas** en tiempo real
+- **Control de cámara** con rotación restringida (-89° a 89°)
+- **Backup completo** excluyendo solo temporales
+
+### ⚙️ CONFIGURACIÓN
+- **Motor:** Godot 4.6.1
+- **Lenguaje:** C# (.NET 8.0)
+- **Resolución:** 1920x1080 (viewport stretch)
+- **Plataforma:** Windows (extensible a otras)
+
+### 🐛 ERRORES CORREGIDOS
+- **Bucle infinito en menú de pausa** - Eliminada detección manual de clics
+- **Cámara no se bloqueaba** - Implementado sistema de congelación
+- **Imagen de splash no escalaba** - Configurado modo viewport y stretch
+- **Importación de recursos** - Sistema de carga directa desde archivo
+
+### 🔄 PRÓXIMOS PASOS (v0.2.0)
+- [ ] Menú de Opciones (gráficos, audio, controles)
+- [ ] Sistema de guardado/carga de partidas
+- [ ] Menú de Cargar Partida con lista de slots
+- [ ] Terreno procedural básico
+- [ ] Mecánicas de supervivencia (salud, estamina)
+- [ ] Inventario básico
+- [ ] Sistema día/noche
+- [ ] Efectos de sonido básicos
+
+---
+
+## NOTAS
+- Esta versión alpha estable incluye todos los menús básicos funcionando
+- El sistema de backup preserva todo el proyecto excepto temporales
+- El splash screen personalizado reemplaza el logo de Godot
+- La arquitectura está preparada para futuro multijugador
+
+**Total de commits/features:** ~15 funcionalidades principales  
+**Tiempo de desarrollo:** ~4 horas  
+**Estado:** Estable para continuar desarrollo

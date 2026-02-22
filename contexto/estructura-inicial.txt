@@ -1,0 +1,59 @@
+================================================================================
+  ESTRUCTURA INICIAL DEL PROYECTO — Wild (Godot 4 + C#)
+================================================================================
+  Generada en la primera construcción básica. Ver resumen.txt y menus-y-servidor.txt.
+================================================================================
+
+CARPETAS Y ARCHIVOS PRINCIPALES
+-------------------------------
+wild/
+  project.godot          Configuración del proyecto Godot 4, C#, escena principal main_menu
+  Wild.csproj            Proyecto C# (.NET 8, Godot.NET.Sdk 4.3)
+  contexto/              Archivos de contexto (resumen, mecánicas, menús, etc.)
+  scenes/
+    main_menu.tscn      Menú principal (Nueva partida, Cargar, Opciones, Salir)
+    new_game_menu.tscn  Menú intermedio nueva partida: semilla, nombre personaje, género, nombre mundo
+    options_menu.tscn   Menú opciones: panel lateral (Controles, Gráficos); Volver
+    game_world.tscn     Escena de partida: suelo 3D, luz, cámara (placeholder servidor local)
+  scripts/
+    MainMenu.cs         Lógica del menú principal; Opciones → OpenOptions()
+    NewGameMenu.cs      Menú nueva partida: guarda datos en SessionData y llama StartNewGame()
+    OptionsMenu.cs      Menú opciones: Controles (WASD, ESPACIO, CTRL), Gráficos (distancia renderizado)
+    GameWorld.cs        Lógica del mundo; lee SessionData y GameSettings.RenderDistanceMetres; Escape = volver
+    autoload/
+      GameFlow.cs       Autoload: OpenNewGameMenu(), OpenOptions(), StartNewGame(), LoadGame(), ReturnToMainMenu(), QuitGame()
+      SessionData.cs    Autoload: WorldSeed, CharacterName, Gender, WorldName (rellenado en NewGameMenu)
+      GameSettings.cs   Autoload: RenderDistanceMetres (25–500 m); persistencia pendiente
+  .vscode/               Configuración para VS Code/Cursor: ejecutar y depurar
+    extensions.json     Extensiones recomendadas (C#, Godot C#, Godot Tools)
+    launch.json         Configuraciones de depuración (Play Godot)
+    tasks.json          Tarea "build" (dotnet build) para preLaunchTask
+    README-DEBUG.md     Instrucciones para ejecutar y depurar
+
+FLUJO ACTUAL
+------------
+1. Al ejecutar el juego se carga scenes/main_menu.tscn (definido en run/main_scene).
+2. Menú principal: "Nueva partida" → GameFlow.OpenNewGameMenu() → cambia a new_game_menu.tscn.
+3. En nueva partida: semilla (o "Aleatorio"), nombre personaje, género (Hombre/Mujer), nombre mundo → "Crear partida" guarda en SessionData y GameFlow.StartNewGame() → game_world.tscn. "Volver" → main_menu.
+4. "Cargar partida" → por ahora igual que nueva partida (persistencia pendiente).
+5. "Opciones" → GameFlow.OpenOptions() → options_menu.tscn (panel lateral: Controles, Gráficos; Volver → main_menu).
+6. "Salir" → GameFlow.QuitGame() → cierra el juego.
+7. En partida (game_world): tecla Escape (o ui_cancel/pause) → GameFlow.ReturnToMainMenu() → vuelve a main_menu.tscn.
+
+INPUT (project.godot): move_forward (W), move_back (S), move_left (A), move_right (D), jump (ESPACIO), crouch (CTRL).
+
+REQUISITOS PARA EJECUTAR
+------------------------
+- Godot 4.3 (o compatible) con soporte C#.
+- .NET SDK 8.0 instalado (64 bits si Godot es 64 bits).
+- Abrir la carpeta del proyecto con Godot; dejar que genere .godot/mono si es necesario.
+- Ejecutar con F5 o el botón Play (escena principal = main_menu).
+
+PRÓXIMOS PASOS SUGERIDOS
+-------------------------
+- Añadir menú de pausa en partida (Reanudar, Guardar, Volver al menú) en lugar de volver directo con Escape.
+- Implementar guardado/carga (formato, slots).
+- Añadir jugador 3D y controles básicos en game_world.
+- Separar lógicamente "servidor local" (nodo/autoridad) y "cliente" cuando se implemente red.
+
+================================================================================
