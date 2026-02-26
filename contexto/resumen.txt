@@ -11,7 +11,7 @@ El proyecto usa el motor Godot y el lenguaje C#.
 PILARES DEL PROYECTO
 --------------------
 • Simulación realista: mecánicas, física y comportamiento coherente con la idea
-  de “realismo” que se defina para el juego.
+  de "realismo" que se defina para el juego.
 • Generación procedural: contenido (terreno, objetos, eventos, etc.) generado
   por reglas y algoritmos, no solo por datos fijos.
 • Desarrollo iterativo: avance por ciclos pequeños (divide y vencerás), con
@@ -23,8 +23,8 @@ PILARES DEL PROYECTO
 
 TECNOLOGÍAS
 -----------
-• Motor: Godot (versión a definir según estabilidad de C#).
-• Lenguaje: C# (scripting en Godot).
+• Motor: Godot 4.6.1 (versión estable con C# completo).
+• Lenguaje: C# (.NET 8.0, scripting en Godot).
 • Plataforma objetivo: PC (Windows como referencia; otras según se decida).
 
 ESTRATEGIA DE DESARROLLO: DIVIDE Y VENCERÁS
@@ -34,14 +34,14 @@ ESTRATEGIA DE DESARROLLO: DIVIDE Y VENCERÁS
 3. Cuando una tarea es suficientemente pequeña y concisa, se implementa el
    código final (manual o asistido por IA).
 4. La carpeta "contexto" guarda archivos de texto con información de contexto
-   para que cualquier conversación o “motor de desarrollo” de IA pueda
+   para que cualquier conversación o "motor de desarrollo" de IA pueda
    entender el proyecto sin revisar todo el código.
 
 CARPETA "CONTEXTO"
 -----------------
 En la carpeta "contexto" se almacenan:
 • resumen.txt (este archivo): visión general del proyecto. Sirve para que una
-  conversación nueva pueda “leer el resumen” y adquirir el contexto básico
+  conversación nueva pueda "leer el resumen" y adquirir el contexto básico
   sin entrar en detalles técnicos profundos.
 • mecanicas.txt: descripción de las mecánicas del juego (recolección,
   crafteo, construcción, inventario, salud, estamina, nutrición,
@@ -51,13 +51,14 @@ En la carpeta "contexto" se almacenan:
   por ahora; facilita futuro cooperativo/multijugador, estilo Minecraft).
 • estructura-inicial.txt: estructura de carpetas y archivos de la construcción
   básica inicial del juego (Godot 4 + C#), flujo menú/partida y requisitos.
+• estado-actual.txt: estado actual del proyecto con últimos hitos logrados.
 • Otros archivos de texto que se irán añadiendo con detalles técnicos,
   convenciones, glosario, estado del proyecto, etc., según haga falta.
 
 CÓMO USAR ESTE RESUMEN
 ----------------------
-En una conversación nueva de contexto, se puede indicar: “lee el resumen.txt”
-(o “lee contexto/resumen.txt”). Con eso, la IA obtiene:
+En una conversación nueva de contexto, se puede indicar: "lee el resumen.txt"
+(o "lee contexto/resumen.txt"). Con eso, la IA obtiene:
 - Qué es el proyecto (juego 3D, simulación realista, procedural).
 - Con qué se hace (Godot, C#).
 - Cómo se desarrolla (iterativo, divide y vencerás, pseudocódigo primero).
@@ -67,6 +68,15 @@ Los detalles técnicos, arquitectura y tareas concretas vivirán en otros
 archivos de "contexto" y en el propio código; este resumen solo da la base
 para entender el proyecto de un vistazo.
 
+ESTADO ACTUAL DEL PROYECTO
+--------------------------
+• **Versión:** Alpha 0.1.2 (26/02/2026)
+• **Hitos recientes:** Renderizado 3D de árboles GLB con spawn procedural,
+  sistema de importación optimizado, logging limpio.
+• **Arquitectura:** Cliente-servidor completa y funcional.
+• **Renderizado:** 10 árboles GLB con escala correcta en mundo 3D.
+• **Sistemas:** Menús, movimiento FPS, logging, backups automatizados.
+
 ================================================================================
-  Última actualización conceptual: 2026-02-24 - Alpha 0.1.1 con arquitectura cliente-servidor
+  Última actualización conceptual: 2026-02-26 - Alpha 0.1.2 con renderizado 3D
 ================================================================================

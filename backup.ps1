@@ -35,11 +35,11 @@ function Get-BackupReason {
         [string]$Prompt = "Ingrese el motivo del backup:"
     )
     
-    # Mostrar diálogo para ingresar el motivo
-    Add-Type -AssemblyName System.Windows.Forms
-    $reason = [Microsoft.VisualBasic.Interaction]::InputBox($Prompt, $Title)
+    # Usar Read-Host en lugar de InputBox (más compatible)
+    Write-Host "$Prompt" -ForegroundColor Yellow
+    $reason = Read-Host
     
-    # Si el usuario cancela o deja vacío, usar valor por defecto
+    # Si el usuario deja vacío, usar valor por defecto
     if ([string]::IsNullOrEmpty($reason)) {
         $reason = "manual"
     }
@@ -183,15 +183,13 @@ function Restore-Backup {
 # Ejecutar acción
 switch ($Action) {
     "create" {
-        $BackupReason = Get-BackupReason
-        Create-Backup -BackupReason $BackupReason
+        Create-Backup -BackupReason $Reason
     }
     "restore" {
-        $BackupName = Get-BackupReason
         Restore-Backup -BackupName $BackupName
     }
     default {
-        Write-Host "Uso: .\backup.ps1 [create|restore]" -ForegroundColor White
+        Write-Host "Uso: .\backup.ps1 [create|restore] [motivo]" -ForegroundColor White
         exit 1
     }
 }

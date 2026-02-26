@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://game_world_minimal"]
+[gd_scene load_steps=6 format=3 uid="uid://game_world_minimal"]
 
 [ext_resource type="Script" path="res://scripts/GameWorld.cs" id="1_gwm"]
 [ext_resource type="PackedScene" uid="uid://pause_menu" path="res://scenes/pause_menu.tscn" id="2_pm"]
@@ -9,6 +9,9 @@ albedo_color = Color(0.2, 0.6, 0.2, 1)
 [sub_resource type="BoxMesh" id="BoxMesh_1"]
 material = SubResource("Material_1")
 size = Vector3(10, 1, 10)
+
+[sub_resource type="BoxShape3D" id="TreeCollision"]
+size = Vector3(1, 4, 1)
 
 [node name="GameWorld" type="Node3D"]
 script = ExtResource("1_gwm")

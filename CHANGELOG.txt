@@ -1,5 +1,33 @@
 # CHANGELOG - Wild - Videojuego 3D de Simulación Realista
 
+## Versión 0.1.2-ALPHA
+**Fecha:** 2026-02-26  
+**Estado:** Alpha con renderizado 3D de árboles y logging optimizado
+
+---
+
+### 🌳 RENDERIZADO 3D DE ÁRBOLES
+- ✅ **Modelo GLB importado** tree_default.glb con configuración correcta
+- ✅ **Sistema de spawn** de 10 árboles en posiciones aleatorias (10x10m)
+- ✅ **Escalado correcto** con nodes/root_scale=5.0 para tamaño visualmente aceptable
+- ✅ **Función SpawnModel** reutilizable para cualquier modelo 3D
+- ✅ **SpawnRandomTrees** para generación procedural de árboles
+- ✅ **Sistema de importación** Godot CLI para procesar GLB correctamente
+
+### 🧹 LIMPIEZA DE CÓDIGO
+- ✅ **Logging optimizado** en GameWorld.cs - solo logs esenciales activos
+- ✅ **Logs de depuración comentados** para uso futuro sin eliminar
+- ✅ **Código temporal eliminado** (DAE, FBX, árboles de prueba)
+- ✅ **Assets no utilizados removidos** para mantener proyecto limpio
+
+### 🔧 MEJORAS TÉCNICAS
+- ✅ **Sistema de backup** mejorado con motivo personalizado
+- ✅ **Proceso de reimportación** forzada para cambios de escala
+- ✅ **Gestión de cache** de importación para evitar problemas
+- ✅ **Documentación actualizada** con estado actual del proyecto
+
+---
+
 ## Versión 0.1.1-ALPHA
 **Fecha:** 2026-02-24  
 **Estado:** Alpha funcional con arquitectura cliente-servidor

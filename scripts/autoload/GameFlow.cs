@@ -17,6 +17,7 @@ public partial class GameFlow : Node
     // Componentes de red
     private GameServer _gameServer = null!;
     private GameClient _gameClient = null!;
+    private bool _isStartingGame = false;
     
     public override void _Ready()
     {
@@ -48,42 +49,66 @@ public partial class GameFlow : Node
     /// <summary>Inicia una partida nueva (arranca servidor, conecta cliente y cambia escena).</summary>
     public async void StartNewGame()
     {
-        Logger.Log("GameFlow: StartNewGame() - iniciando servidor local");
+        // Protección contra múltiples clics
+        if (_isStartingGame)
+        {
+            Logger.Log("GameFlow: StartNewGame() ya en ejecución - ignorando clic duplicado");
+            return;
+        }
+        
+        _isStartingGame = true;
+        Logger.Log("GameFlow: StartNewGame() - INICIANDO NUEVA PARTIDA");
         
         try
         {
+            Logger.Log("GameFlow: Paso 1 - Iniciando servidor local");
             // 1. Iniciar servidor local
             var serverStarted = await _gameServer.StartServer();
+            Logger.Log($"GameFlow: Servidor iniciado: {serverStarted}");
+            
             if (!serverStarted)
             {
-                Logger.LogError("GameFlow: No se pudo iniciar el servidor local");
+                Logger.LogError("GameFlow: ERROR CRÍTICO - No se pudo iniciar el servidor local");
+                _isStartingGame = false;
                 return;
             }
             
+            Logger.Log("GameFlow: Paso 2 - Conectando cliente al servidor");
             // 2. Conectar cliente al servidor
             var clientConnected = await _gameClient.ConnectToServer();
+            Logger.Log($"GameFlow: Cliente conectado: {clientConnected}");
+            
             if (!clientConnected)
             {
-                Logger.LogError("GameFlow: No se pudo conectar el cliente al servidor");
+                Logger.LogError("GameFlow: ERROR CRÍTICO - No se pudo conectar el cliente al servidor");
                 _gameServer.StopServer();
+                _isStartingGame = false;
                 return;
             }
             
+            Logger.Log("GameFlow: Paso 3 - Verificando escena");
             // 3. Verificar escena y cambiar
             if (!Godot.FileAccess.FileExists(SceneGameWorld))
             {
-                Logger.LogError($"GameFlow: ERROR - La escena no existe: {SceneGameWorld}");
+                Logger.LogError($"GameFlow: ERROR CRÍTICO - La escena no existe: {SceneGameWorld}");
+                _isStartingGame = false;
                 return;
             }
             
-            Logger.Log($"GameFlow: Servidor y cliente listos - cargando escena: {SceneGameWorld}");
+            Logger.Log($"GameFlow: Paso 4 - Servidor y cliente listos - CAMBIANDO ESCENA A: {SceneGameWorld}");
             GetTree().ChangeSceneToFile(SceneGameWorld);
+            Logger.Log("GameFlow: ESCENA CAMBIADA - StartNewGame completado");
         }
         catch (System.Exception ex)
         {
-            Logger.LogError($"GameFlow: Excepción al iniciar partida: {ex.Message}");
+            Logger.LogError($"GameFlow: EXCEPCIÓN CRÍTICA en StartNewGame: {ex.Message}");
+            Logger.LogError($"GameFlow: Stack trace: {ex.StackTrace}");
             _gameServer.StopServer();
             _gameClient.Disconnect();
+        }
+        finally
+        {
+            _isStartingGame = false;
         }
     }
 
@@ -98,6 +123,9 @@ public partial class GameFlow : Node
     public void ReturnToMainMenu()
     {
         Logger.Log("GameFlow: ReturnToMainMenu() - deteniendo servidor y cliente");
+        
+        // Resetear flag de inicio de juego
+        _isStartingGame = false;
         
         // Detener componentes de red
         _gameClient.Disconnect();

@@ -1,6 +1,22 @@
-# Estado Actual del Proyecto Wild - 24/02/2026
+# Estado Actual del Proyecto Wild - 26/02/2026
 
 ## ✅ Hitos Importantes Logrados
+
+### Renderizado 3D de Árboles (Alpha 0.1.2)
+- **Modelo GLB importado** tree_default.glb con configuración correcta
+- **Sistema de spawn procedural** de 10 árboles en posiciones aleatorias (área 10x10m)
+- **Escalado optimizado** con nodes/root_scale=5.0 para tamaño visualmente aceptable
+- **Función SpawnModel** reutilizable para cualquier modelo 3D futuro
+- **SpawnRandomTrees** implementado para generación automática de árboles
+- **Sistema de importación GLB** con Godot CLI para procesamiento correcto
+- **Gestión de cache de importación** para evitar problemas de escala
+
+### Limpieza y Optimización
+- **Logging optimizado** en GameWorld.cs - solo logs esenciales activos
+- **Logs de depuración comentados** para uso futuro sin eliminar código
+- **Código temporal eliminado** (DAE, FBX, árboles de prueba cilindro)
+- **Assets no utilizados removidos** para mantener proyecto limpio
+- **Código refactorizado** con funciones reutilizables
 
 ### Arquitectura Cliente-Servidor (Alpha 0.1.1)
 - **GameServer.cs** completamente implementado con sistema servidor local
@@ -24,6 +40,7 @@
 - **UI de coordenadas** activa y mostrando posición/ángulos
 - **Suelo verde básico** con cámara y luz direccional
 - **Sistema de congelación/descongelación** del jugador y cámara
+- **10 árboles GLB renderizados** con escala correcta en el mundo
 
 ### Sistema de Backups Automatizado
 - **backup.ps1** completamente funcional
@@ -38,6 +55,7 @@
 - **Sin bucles infinitos** ni bloqueos en el menú de pausa
 - **Scripts principales** sin errores de compilación
 - **Arquitectura cliente-servidor** estable y funcional
+- **Importación GLB** con escala correcta funcionando
 
 ### Próximos Pasos
 1. **Expansión funcionalidades cliente-servidor** (sincronización)
@@ -47,15 +65,16 @@
 5. **Terreno procedural** usando algoritmos
 6. **Mecánicas básicas** (salud, estamina, inventario)
 7. **Manejo de múltiples clientes** (base multijugador)
+8. **Más modelos 3D** usando el sistema SpawnModel implementado
 
-## 🎮 Estado Actual: ALPHA 0.1.1 - ARQUITECTURA CLIENTE-SERVIDOR COMPLETA
+## 🎮 Estado Actual: ALPHA 0.1.2 - RENDERIZADO 3D DE ÁRBOLES COMPLETO
 
-El proyecto tiene una arquitectura cliente-servidor completa y funcional. El sistema servidor local gestiona toda la lógica de juego mientras el cliente maneja input y renderizado. La base para futuro multijugador cooperativo está establecida.
+El proyecto ahora tiene renderizado 3D funcional con 10 árboles GLB generados proceduralmente, sistema de importación optimizado, logging limpio y arquitectura cliente-servidor completa. La base para expansión de contenido 3D está establecida.
 
 ## 📦 Último Backup
-- **Fecha:** 24/02/2026 (versión Alpha 0.1.1)
-- **Motivo:** implementacion_cliente_servidor
-- **Archivos:** Scripts de red + actualizaciones de contexto
+- **Fecha:** 26/02/2026 (versión Alpha 0.1.2)
+- **Motivo:** alpha0.1.2
+- **Archivos:** Árboles GLB + logging optimizado + contexto actualizado
 - **Formato:** ZIP comprimido
 
 ## 📋 Sistema de Backups

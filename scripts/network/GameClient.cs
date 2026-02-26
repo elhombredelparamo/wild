@@ -140,14 +140,14 @@ public partial class GameClient : Node
         try
         {
             // Debug: mostrar mensaje que se va a enviar
-            Logger.Log($"GameClient: Enviando posición: {positionMessage}");
+            // Logger.Log($"GameClient: Enviando posición: {positionMessage}");
             
             var buffer = Encoding.UTF8.GetBytes(positionMessage);
             await _stream.WriteAsync(buffer, 0, buffer.Length);
         }
         catch (Exception ex)
         {
-            Logger.LogError($"GameClient: Error enviando posición: {ex.Message}");
+            // Logger.LogError($"GameClient: Error enviando posición: {ex.Message}");
         }
     }
     
@@ -214,7 +214,7 @@ public partial class GameClient : Node
                 if (readBuffer[0] == '\n')
                 {
                     var line = Encoding.UTF8.GetString(buffer.ToArray());
-                    Logger.Log($"GameClient: Línea leída: '{line}'");
+                    // Logger.Log($"GameClient: Línea leída: '{line}'");
                     return line;
                 }
                 
@@ -234,7 +234,7 @@ public partial class GameClient : Node
     {
         try
         {
-            Logger.Log($"GameClient: Mensaje recibido del servidor: '{message}'");
+            // Logger.Log($"GameClient: Mensaje recibido del servidor: '{message}'");
             
             // El servidor puede enviar múltiples mensajes en una línea, separarlos
             var messages = message.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -243,7 +243,7 @@ public partial class GameClient : Node
             {
                 if (string.IsNullOrEmpty(msg.Trim())) continue;
                 
-                Logger.Log($"GameClient: Procesando mensaje individual: '{msg.Trim()}'");
+                // Logger.Log($"GameClient: Procesando mensaje individual: '{msg.Trim()}'");
                 
                 // Formato: "TIPO:datos"
                 var parts = msg.Split(':', 2);
@@ -256,7 +256,7 @@ public partial class GameClient : Node
                 var type = parts[0];
                 var data = parts[1];
                 
-                Logger.Log($"GameClient: Procesando mensaje - Tipo: '{type}', Datos: '{data}'");
+                // Logger.Log($"GameClient: Procesando mensaje - Tipo: '{type}', Datos: '{data}'");
                 
                 switch (type)
                 {
@@ -299,7 +299,7 @@ public partial class GameClient : Node
     
     private void ProcessStateUpdate(string stateData)
     {
-        Logger.Log($"GameClient: ProcessStateUpdate llamado con datos: '{stateData}'");
+        // Logger.Log($"GameClient: ProcessStateUpdate llamado con datos: '{stateData}'");
         
         // Formato: "x,y,z|pitch,yaw"
         var parts = stateData.Split('|');
@@ -319,14 +319,14 @@ public partial class GameClient : Node
                 float.Parse(posCoords[2], CultureInfo.InvariantCulture)
             );
             
-            Logger.Log($"GameClient: Posición actualizada: {_serverPosition}");
+            // Logger.Log($"GameClient: Posición actualizada: {_serverPosition}");
             
             // Notificar al GameWorld
             CallDeferred(nameof(EmitPositionUpdated), _serverPosition);
         }
         else
         {
-            Logger.Log($"GameClient: Coordenadas de posición inválidas (esperado 3, recibido {posCoords.Length}): '{parts[0]}'");
+            // Logger.Log($"GameClient: Coordenadas de posición inválidas (esperado 3, recibido {posCoords.Length}): '{parts[0]}'");
         }
         
         // Rotación
@@ -339,7 +339,7 @@ public partial class GameClient : Node
                 0
             );
             
-            Logger.Log($"GameClient: Rotación actualizada: {_serverRotation}");
+            // Logger.Log($"GameClient: Rotación actualizada: {_serverRotation}");
             
             // Notificar al GameWorld
             CallDeferred(nameof(EmitRotationUpdated), _serverRotation);
@@ -416,7 +416,7 @@ public partial class GameClient : Node
                 Rotation = rotation
             };
             
-            Logger.Log($"GameClient: Jugador remoto {playerId} actualizado: pos={position}, rot={rotation}");
+            // Logger.Log($"GameClient: Jugador remoto {playerId} actualizado: pos={position}, rot={rotation}");
             
             // Notificar al GameWorld
             CallDeferred(nameof(EmitRemotePlayerUpdated), playerId, position, rotation);
@@ -459,7 +459,7 @@ public partial class GameClient : Node
                 Rotation = rotation
             };
             
-            Logger.Log($"GameClient: Jugador remoto {playerId} se unió: pos={position}, rot={rotation}");
+            // Logger.Log($"GameClient: Jugador remoto {playerId} se unió: pos={position}, rot={rotation}");
             
             // Notificar al GameWorld
             CallDeferred(nameof(EmitRemotePlayerJoined), playerId, position, rotation);
@@ -489,19 +489,19 @@ public partial class GameClient : Node
     
     private void EmitPositionUpdated(Vector3 position)
     {
-        Logger.Log($"GameClient: EmitPositionUpdated llamado con posición: {position}");
+        // Logger.Log($"GameClient: EmitPositionUpdated llamado con posición: {position}");
         EmitSignal(SignalName.OnPositionUpdated, position);
     }
     
     private void EmitRotationUpdated(Vector3 rotation)
     {
-        Logger.Log($"GameClient: EmitRotationUpdated llamado con rotación: {rotation}");
+        // Logger.Log($"GameClient: EmitRotationUpdated llamado con rotación: {rotation}");
         EmitSignal(SignalName.OnRotationUpdated, rotation);
     }
     
     private void EmitRemotePlayerJoined(string playerId, Vector3 position, Vector3 rotation)
     {
-        Logger.Log($"GameClient: EmitRemotePlayerJoined llamado con playerId: {playerId}, pos: {position}, rot: {rotation}");
+        // Logger.Log($"GameClient: EmitRemotePlayerJoined llamado con playerId: {playerId}, pos: {position}, rot: {rotation}");
         EmitSignal(SignalName.OnRemotePlayerJoined, playerId, position, rotation);
     }
     
@@ -513,7 +513,7 @@ public partial class GameClient : Node
     
     private void EmitRemotePlayerUpdated(string playerId, Vector3 position, Vector3 rotation)
     {
-        Logger.Log($"GameClient: EmitRemotePlayerUpdated llamado con playerId: {playerId}, pos: {position}, rot: {rotation}");
+        // Logger.Log($"GameClient: EmitRemotePlayerUpdated llamado con playerId: {playerId}, pos: {position}, rot: {rotation}");
         EmitSignal(SignalName.OnRemotePlayerUpdated, playerId, position, rotation);
     }
     

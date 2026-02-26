@@ -23,3 +23,6 @@ backups/
 
 # OS files
 desktop.ini
+
+# External assets repository
+cantera_assets/

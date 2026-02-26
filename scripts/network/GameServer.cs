@@ -287,7 +287,7 @@ public partial class GameServer : Node
     {
         // Este método ya no se usa en el flujo principal
         // El cliente ahora envía inputs en lugar de actualizaciones de posición
-        Logger.Log($"GameServer: ProcessPositionUpdate obsoleto - ignorando: {positionData}");
+        // Logger.Log($"GameServer: ProcessPositionUpdate obsoleto - ignorando: {positionData}");
     }
     
     private void ApplyInputImmediate(Vector3 direction, Vector3 rotation, PlayerInfo playerInfo)
@@ -301,7 +301,7 @@ public partial class GameServer : Node
         // Actualizar rotación directamente (sin multiplicar)
         playerInfo.Rotation = rotation;
         
-        Logger.Log($"GameServer: Input aplicado para {playerInfo.PlayerId} - Pos: {playerInfo.Position}, Rot: {playerInfo.Rotation}");
+        // Logger.Log($"GameServer: Input aplicado para {playerInfo.PlayerId} - Pos: {playerInfo.Position}, Rot: {playerInfo.Rotation}");
         
         // Enviar estado actualizado solo cuando se aplica input
         BroadcastPlayerState(playerInfo);
