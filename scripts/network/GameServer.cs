@@ -41,8 +41,9 @@ public partial class GameServer : Node
     private bool _isRunning = false;
     
     // Configuración
-    private const int Port = 7777;
+    private const int DefaultPort = 7778;
     private const string Host = "127.0.0.1";
+    private static int Port = DefaultPort;
     private const float PlayerMoveSpeed = 1.11f; // 4 km/h = 1.11 m/s exactos
     private const float ServerTickRate = 60f; // 60 ticks por segundo
     private double _lastTickTime = 0;
@@ -50,6 +51,41 @@ public partial class GameServer : Node
     public override void _Ready()
     {
         Logger.Log("GameServer: Inicializado");
+    }
+    
+    public override void _ExitTree()
+    {
+        Logger.Log("GameServer: _ExitTree() llamado - limpiando recursos");
+        
+        // Forzar detención completa del servidor
+        StopServer();
+    }
+    
+    /// <summary>Intenta iniciar servidor en el puerto configurado, si falla prueba puertos consecutivos.</summary>
+    public async Task<bool> StartServerWithPortFallback()
+    {
+        for (int port = Port; port <= Port + 10; port++)
+        {
+            Port = port;
+            Logger.Log($"GameServer: Intentando iniciar servidor en puerto {Port}");
+            
+            try
+            {
+                var result = await StartServer();
+                if (result)
+                {
+                    Logger.Log($"GameServer: ✅ Servidor iniciado exitosamente en puerto {Port}");
+                    return true;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Logger.Log($"GameServer: ❌ Error en puerto {Port}: {ex.Message}");
+            }
+        }
+        
+        Logger.LogError($"GameServer: ❌ No se pudo iniciar el servidor en ningún puerto del {Port} al {Port + 10}");
+        return false;
     }
     
     public override void _PhysicsProcess(double delta)
@@ -199,7 +235,7 @@ public partial class GameServer : Node
     {
         try
         {
-            Logger.Log($"GameServer: Mensaje recibido de {playerInfo.PlayerId}: {message}");
+            // Logger.Log($"GameServer: Mensaje recibido de {playerInfo.PlayerId}: {message}");
             
             // Formato: "TIPO:datos"
             var parts = message.Split(':', 2);
@@ -387,8 +423,4 @@ public partial class GameServer : Node
         }
     }
     
-    public override void _ExitTree()
-    {
-        StopServer();
     }
-}

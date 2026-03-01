@@ -92,19 +92,16 @@ text = "Aleatorio"
 
 [node name="LabelCharacter" type="Label" parent="CenterContainer/Panel/MarginContainer/VBox"]
 layout_mode = 2
-text = "Nombre del personaje"
+text = "Personaje seleccionado"
 
-[node name="EditCharacterName" type="LineEdit" parent="CenterContainer/Panel/MarginContainer/VBox"]
+[node name="LabelCharacterInfo" type="Label" parent="CenterContainer/Panel/MarginContainer/VBox"]
 layout_mode = 2
-placeholder_text = "Ej: Alex"
+theme_override_colors/font_color = Color(0.7, 0.8, 0.9, 1)
+text = "Cargando información..."
 
-[node name="LabelGender" type="Label" parent="CenterContainer/Panel/MarginContainer/VBox"]
+[node name="ButtonChangeCharacter" type="Button" parent="CenterContainer/Panel/MarginContainer/VBox"]
 layout_mode = 2
-text = "Género"
-
-[node name="OptionGender" type="OptionButton" parent="CenterContainer/Panel/MarginContainer/VBox"]
-layout_mode = 2
-custom_minimum_size = Vector2(200, 0)
+text = "Cambiar personaje"
 
 [node name="LabelWorld" type="Label" parent="CenterContainer/Panel/MarginContainer/VBox"]
 layout_mode = 2
@@ -112,7 +109,7 @@ text = "Nombre del mundo"
 
 [node name="EditWorldName" type="LineEdit" parent="CenterContainer/Panel/MarginContainer/VBox"]
 layout_mode = 2
-placeholder_text = "Ej: Mi isla"
+placeholder_text = "Vacío = nombre automático"
 
 [node name="Spacer2" type="Control" parent="CenterContainer/Panel/MarginContainer/VBox"]
 custom_minimum_size = Vector2(0, 16)

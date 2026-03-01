@@ -1,13 +1,185 @@
-================================================================================
-  MECÁNICAS DEL JUEGO — Videojuego 3D de Simulación Realista
-================================================================================
-  Referencia: contexto/resumen.txt para visión general del proyecto.
-================================================================================
+MECÁNICAS DEL JUEGO WILD
+=========================
 
-Este archivo describe las mecánicas de juego acordadas. Cada bloque puede
-ampliarse después con pseudocódigo o especificaciones más finas.
+🎮 MOVIMIENTO DEL JUGADOR
+--------------------------
 
---------------------------------------------------------------------------------
+CONTROLES:
+- WASD: Movimiento en plano XZ (adelante/atrás, izquierda/derecha)
+- Mouse: Rotación de cámara FPS (horizontal y vertical)
+- ESC: Abrir/cerrar menú de pausa
+- Shift: (Reservado para correr en futuro)
+
+FÍSICA:
+- CharacterBody3D: Cuerpo del jugador con gravedad
+- CollisionShape3D: Colisión esférica para el jugador
+- StaticBody3D: Suelo estático con colisión de caja
+- BoxShape3D: Colisiones para árboles (1x4x1m)
+
+CÁMARA:
+- Cámara hija del jugador (se mueve con él)
+- Rotación libre en 3D con mouse
+- Límites de rotación: -90° a +90° (pitch)
+- Captura de cursor al iniciar juego
+
+🌍 MUNDO PROCEDURAL
+--------------------
+
+GENERACIÓN:
+- Terreno plano base de 100x100 unidades
+- Textura de checkerboard 2x2 repetida
+- Spawning aleatorio de 3-10 árboles por mundo
+- Árboles con colisiones y modelo 3D realista
+
+MATERIALES:
+- StandardMaterial3D para suelo con textura de hierba
+- Shader personalizado para patrón checkerboard
+- Sistema de importación automática de texturas
+
+ILUMINACIÓN:
+- Luz direccional principal (sol)
+- Luz ambiental para iluminación base
+- Sombras dinámicas configuradas
+
+🎯 SISTEMA DE GUARDADO
+-----------------------
+
+AUTOMÁTICO:
+- Intervalo: Cada 5 segundos durante el juego
+- Datos: Posición local, global, rotación de cámara
+- Formato: JSON estructurado con timestamp
+
+MANUAL:
+- Al salir del juego: Guardado antes de detener servidor
+- Al pausar: Guardado de estado actual
+- Al cambiar de mundo: Guardado automático de progreso
+
+CARGA:
+- Verificación de integridad de archivos
+- Fallback inteligente: Posición local si global es (0,0,0)
+- IDs consistentes: Mismo ID para guardar y cargar
+
+ESTRUCTURA:
+- user://worlds/{worldName}/player/{playerId}.json
+- user://characters/profiles/{playerId}.json (perfil del personaje)
+- user://characters/stats/{playerId}_stats.json (estadísticas)
+
+🌐 SISTEMA DE RED
+--------------------
+
+ARQUITECTURA:
+- Servidor TCP central (GameServer)
+- Clientes TCP conectados (GameClient)
+- Comunicación bidireccional con mensajes JSON
+
+IDENTIFICACIÓN:
+- IDs únicos: player_1, player_2, player_3...
+- IDs persistentes por sesión de juego
+- Asignación automática al conectar
+
+SINCRONIZACIÓN:
+- Posición y rotación broadcasteadas a todos los jugadores
+- Input de clientes replicado en servidor
+- Estados de jugadores mantenidos en servidor
+
+MENSAJES:
+- PLAYER_JOINED: Nuevo jugador conectado
+- PLAYER_LEFT: Jugador desconectado
+- PLAYER_STATE: Actualización de posición/rotación
+- INPUT: Movimiento y rotación del cliente
+
+🎨 INTERFAZ DE USUARIO
+--------------------
+
+MENÚS:
+- MainMenu: Menú principal con imagen de fondo
+- NewGameMenu: Creación de nuevos mundos
+- WorldSelectMenu: Selección y gestión de mundos
+- OptionsMenu: Configuración del juego
+- PauseMenu: Pausa durante el juego
+
+NAVEGACIÓN:
+- Sistema CardLayout para transiciones fluidas
+- Sin cerrar ventanas al cambiar entre menús
+- Botones interactivos con feedback visual
+
+RESALTADO VISUAL:
+- Mundo seleccionado con borde verde y tamaño aumentado
+- Botones con estados hover y activo
+- Colores consistentes y accesibles
+
+PERSONAJES:
+- CharacterManager: Sistema global de gestión
+- Perfiles con nombre, ID y estadísticas
+- Soporte multi-mundo para mismo personaje
+- Apariencia personalizable (futuro)
+
+🔧 SISTEMA TÉCNICO
+-------------------
+
+MOTOR: Godot 4.6.1
+LENGUAJE: C# (.NET 8.0)
+RENDERIZADO: OpenGL Compatibility
+PLATAFORMA: Windows
+
+ARQUITECTURA:
+- Escenas separadas por funcionalidad
+- Autoload para sistemas globales
+- Sistema de eventos y señales de Godot
+- Inyección de dependencias via GetNode()
+
+OPTIMIZACIONES:
+- Texturas en formato PNG optimizado
+- Sistema de importación con caché
+- Logging reducido para producción
+- Assets limpios y organizados
+
+DEPURACIÓN:
+- Sistema de logging con niveles (Log, LogError, LogWarning)
+- Logs de debugging comentados para producción
+- GD.Print para mensajes críticos en consola
+
+EXTENSIBILIDAD:
+- Sistema de mods preparado (futuro)
+- Configuración por archivos JSON
+- API modular para nuevas características
+- Soporte para localización (futuro)
+
+📈 FLUJO DEL JUEGO
+-------------------
+
+1. INICIO:
+   - Splash screen con logo
+   - Carga de recursos principales
+   - Inicialización de sistemas autoload
+
+2. MENÚ PRINCIPAL:
+   - Selección de partida nueva o cargar existente
+   - Acceso a opciones y configuración
+   - Salida del juego
+
+3. CREACIÓN/SELECCIÓN DE MUNDO:
+   - Nombre automático con timestamp
+   - Selección de semilla procedural
+   - Confirmación de acciones
+
+4. MUNDO ACTIVO:
+   - Generación procedural de terreno
+   - Spawning de objetos del mundo
+   - Sistema de física y colisiones
+   - Movimiento libre del jugador
+
+5. PAUSA:
+   - Congelación de jugador y cámara
+   - Menú de opciones (continuar, salir, configuración)
+   - Guardado automático de estado
+
+6. SALIDA:
+   - Guardado de posición final
+   - Cierre ordenado de conexiones
+   - Limpieza de recursos temporales
+
+El sistema está diseñado para ser robusto, extensible y mantenible, con una clara separación de responsabilidades y una arquitectura modular que facilita el desarrollo futuro.
 1. RECOLECCIÓN DE RECURSOS
 --------------------------------------------------------------------------------
 • El jugador puede recoger recursos del mundo (madera, piedra, minerales,

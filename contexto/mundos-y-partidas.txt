@@ -1,0 +1,251 @@
+================================================================================
+  MUNDOS Y PARTIDAS — Sistema de Gestión de Mundos Independientes
+================================================================================
+  Referencia: contexto/resumen.txt para visión general del proyecto.
+================================================================================
+
+Este archivo describe el sistema de mundos y partidas del juego, donde cada
+partida es un mundo completo con su propio directorio y datos independientes.
+
+--------------------------------------------------------------------------------
+1. CONCEPTO FUNDAMENTAL
+--------------------------------------------------------------------------------
+• Cada "partida" es un "mundo" completamente independiente
+• Los mundos tienen su propio directorio en user://worlds/
+• Cada mundo contiene todos los datos necesarios para su funcionamiento
+• No hay "guardados" manuales - el servidor gestiona la persistencia continua
+• Los jugadores pueden crear múltiples mundos y cambiar entre ellos
+
+--------------------------------------------------------------------------------
+2. ESTRUCTURA DE DIRECTORIOS
+--------------------------------------------------------------------------------
+user://worlds/
+├── Mundo_01_03_2026_120000/          # Mundo con timestamp automático
+│   ├── world_info.json               # Metadatos del mundo
+│   ├── player/                       # Datos del jugador (posición, inventario)
+│   ├── world/                        # Datos del mundo (tiempo, estado)
+│   ├── entities/                     # Entidades y objetos del mundo
+│   └── chunks/                       # Chunks de terreno (generación procedural)
+├── Mi_Mundo_Supervivencia/           # Mundo con nombre personalizado
+│   ├── world_info.json
+│   └── ...
+└── Mundo_Prueba/                     # Otro mundo independiente
+    ├── world_info.json
+    └── ...
+
+--------------------------------------------------------------------------------
+3. METADATOS DEL MUNDO (world_info.json)
+--------------------------------------------------------------------------------
+{
+  "name": "Mi_Mundo",
+  "createdAt": 1709289600,           # Timestamp de creación
+  "lastPlayed": 1709376000,           # Última vez que se jugó
+  "seed": "123456",                   # Semilla para generación procedural
+  "version": "0.1.3",                # Versión del juego que lo creó
+  "playTimeSeconds": 3600            # Tiempo total jugado
+}
+
+• name: Identificador único del mundo
+• seed: Asegura que el mundo procedural sea siempre el mismo
+• version: Para compatibilidad futura y migraciones
+• playTimeSeconds: Estadística del jugador
+
+--------------------------------------------------------------------------------
+4. FLUJO DE USUARIO
+--------------------------------------------------------------------------------
+4.1 Crear Nuevo Mundo
+--------------------
+Menú Principal → "Nueva Partida" → Menú de Creación → Nombre del mundo
+→ WorldManager.CreateWorld() → Crear directorio → Generar world_info.json
+→ Iniciar servidor local → Conectar cliente → Cargar mundo
+
+4.2 Cargar Mundo Existente
+-------------------------
+Menú Principal → "Cargar Mundo" → Lista de mundos disponibles
+→ Seleccionar mundo → WorldManager.LoadWorldInfo() → Iniciar servidor
+→ Conectar cliente → Cargar mundo con sus datos
+
+4.3 Eliminar Mundo
+-----------------
+Menú Principal → "Cargar Mundo" → Seleccionar mundo → "Eliminar"
+→ WorldManager.DeleteWorld() → Borrado recursivo del directorio
+
+--------------------------------------------------------------------------------
+5. WORLDMANAGER - SISTEMA CENTRAL
+--------------------------------------------------------------------------------
+WorldManager es el autoload que gestiona todos los mundos:
+
+5.1 Creación de Mundos
+---------------------
+bool CreateWorld(string worldName)
+- Verifica que no exista un mundo con ese nombre
+- Crea estructura de directorios completa
+- Genera semilla aleatoria
+- Crea world_info.json con metadatos
+- Devuelve WorldInfo si éxito, null si error
+
+5.2 Carga de Mundos
+------------------
+WorldInfo? LoadWorldInfo(string worldName)
+- Lee world_info.json del directorio del mundo
+- Deserializa JSON a objeto WorldInfo
+- Devuelve información completa del mundo
+
+5.3 Eliminación de Mundos
+-----------------------
+bool DeleteWorld(string worldName)
+- Elimina recursivamente todo el directorio del mundo
+- Verifica existencia antes de eliminar
+- Devuelve true si éxito, false si error
+
+5.4 Listado de Mundos
+--------------------
+List<WorldInfo> GetAllWorlds()
+- Escanea user://worlds/ en busca de directorios
+- Carga world_info.json de cada mundo
+- Ordena por lastPlayed (más reciente primero)
+- Devuelve lista completa de mundos disponibles
+
+--------------------------------------------------------------------------------
+6. GAMEFLOW - INTEGRACIÓN CON PARTIDAS
+--------------------------------------------------------------------------------
+GameFlow se integra con WorldManager para iniciar partidas:
+
+6.1 Iniciar Nueva Partida
+------------------------
+async void StartNewGame(string worldName = "")
+- Crea nuevo mundo con WorldManager.CreateWorld()
+- Inicia servidor local con fallback de puertos
+- Conecta cliente al servidor
+- Cambia a escena GameWorld con datos del mundo
+
+6.2 Cargar Partida Existente
+-------------------------
+async void LoadGame(string worldName)
+- Carga información del mundo con WorldManager.LoadWorldInfo()
+- Inicia servidor local
+- Conecta cliente al servidor
+- Cambia a escena GameWorld con mundo cargado
+
+6.3 Lógica Compartida
+--------------------
+private async Task StartGameWithWorld(WorldInfo worldInfo)
+- Lógica compartida para mundos nuevos y cargados
+- Inicia servidor y cliente
+- Prepara escena del juego
+- TODO: Pasar worldInfo al servidor para que cargue los datos
+
+--------------------------------------------------------------------------------
+7. MENÚS DE INTERFAZ
+--------------------------------------------------------------------------------
+7.1 Menú Principal
+-----------------
+- "Nueva Partida": Abre menú de creación de mundos
+- "Cargar Mundo": Abre menú de selección de mundos
+- "Opciones": Configuración del juego
+- "Salir": Cierra aplicación
+
+7.2 Menú de Selección de Mundos
+-------------------------------
+WorldSelectMenu muestra lista de mundos disponibles:
+- Nombre del mundo
+- Fecha de última jugada
+- Tiempo total jugado
+- Botones: "Cargar", "Eliminar", "Volver"
+
+7.3 Menú de Creación de Mundo
+-----------------------------
+NewGameMenu permite:
+- Ingresar nombre personalizado o usar automático
+- Ver información de semilla (generada automáticamente)
+- Confirmar creación del mundo
+
+--------------------------------------------------------------------------------
+8. PERSISTENCIA Y SERVIDOR
+--------------------------------------------------------------------------------
+8.1 Servidor Local
+---------------
+- Cada partida ejecuta su propio servidor local
+- El servidor gestiona la persistencia continua del mundo
+- No requiere intervención del usuario para guardar
+- Los cambios se mantienen mientras el servidor está activo
+
+8.2 Datos del Mundo
+-----------------
+- Servidor guarda estado continuamente en memoria
+- Datos críticos se persisten en disco periódicamente
+- Al salir, servidor guarda estado final en directorio del mundo
+- Al cargar, servidor restaura estado desde directorio del mundo
+
+8.3 Sin Guardados Manuales
+-------------------------
+- El jugador no puede "guardar" manualmente
+- No hay checkpoints ni slots de guardado
+- El mundo vive mientras el servidor está activo
+- La persistencia es transparente al usuario
+
+--------------------------------------------------------------------------------
+9. ESTADO ACTUAL DE IMPLEMENTACIÓN
+--------------------------------------------------------------------------------
+✅ COMPLETADO:
+- WorldManager con creación, carga, eliminación y listado de mundos
+- Estructura de directorios automática con world_info.json
+- Menús de selección y creación de mundos funcionales
+- Integración completa con GameFlow
+- Sistema de metadatos con semilla y estadísticas
+- Eliminación recursiva segura de mundos
+
+🔄 EN PROGRESO:
+- Integración de worldInfo con el servidor (para carga real de datos)
+- Persistencia continua del servidor en directorios del mundo
+- Carga real de datos del jugador y mundo al iniciar partida
+
+📋 PRÓXIMOS PASOS:
+- Servidor debe usar worldInfo.Seed para generación procedural
+- Servidor debe cargar datos desde directorio del mundo al iniciar
+- Servidor debe guardar cambios periódicamente en directorio del mundo
+- Sistema de migración para cambios de versión entre mundos
+
+--------------------------------------------------------------------------------
+10. EJEMPLOS DE USO
+--------------------------------------------------------------------------------
+10.1 Crear Mundo
+---------------
+var worldInfo = WorldManager.Instance.CreateWorld("Mi_Aventura");
+// Crea: user://worlds/Mi_Aventura/world_info.json
+// Genera semilla aleatoria: "789012"
+// Crea estructura: player/, world/, entities/, chunks/
+
+10.2 Cargar Mundo
+---------------
+var worldInfo = WorldManager.Instance.LoadWorldInfo("Mi_Aventura");
+// Lee: user://worlds/Mi_Aventura/world_info.json
+// Devuelve WorldInfo con todos los metadatos
+
+10.3 Listar Mundos
+----------------
+var worlds = WorldManager.Instance.GetAllWorlds();
+// Devuelve lista ordenada por última jugada
+// Cada WorldInfo contiene nombre, fecha, tiempo jugado, semilla
+
+10.4 Eliminar Mundo
+-----------------
+bool success = WorldManager.Instance.DeleteWorld("Mi_Aventura");
+// Elimina recursivamente: user://worlds/Mi_Aventura/
+// Devuelve true si éxito, false si error
+
+--------------------------------------------------------------------------------
+11. VENTAJAS DEL DISEÑO
+--------------------------------------------------------------------------------
+• Aislamiento total: Cada mundo es completamente independiente
+• Escalabilidad: Soporta número ilimitado de mundos
+• Organización: Estructura clara y mantenible
+• Persistencia real: Datos guardados en disco permanentemente
+• Seguridad: Eliminación controlada y verificada
+• Compatibilidad: Versionado para futuras migraciones
+• Simplicidad: Flujo intuitivo para el usuario
+
+================================================================================
+  Este sistema permite a los jugadores tener múltiples aventuras independientes,
+  cada una con su propio mundo persistente y completamente aislado de las demás.
+================================================================================

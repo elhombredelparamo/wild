@@ -65,4 +65,10 @@ public static class Logger
             GD.PrintErr($"Error al escribir error en log: {ex.Message}");
         }
     }
+    
+    public static void LogWarning(string message)
+    {
+        // Redirigir a Log para mantener consistencia
+        Log($"WARNING: {message}");
+    }
 }

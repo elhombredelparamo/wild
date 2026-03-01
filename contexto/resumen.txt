@@ -24,8 +24,26 @@ PILARES DEL PROYECTO
 TECNOLOGÍAS
 -----------
 • Motor: Godot 4.6.1 (versión estable con C# completo).
+• Ruta Godot: C:\Godot\Godot_v4.6.1-stable_mono_win64_console.exe
 • Lenguaje: C# (.NET 8.0, scripting en Godot).
 • Plataforma objetivo: PC (Windows como referencia; otras según se decida).
+
+ESTADO ACTUAL (v0.1.3-ALPHA)
+----------------------------
+• **Terreno con texturas**: Suelo con textura de hierba seamless y colisiones
+• **Sistema de colisiones**: Jugador, suelo y árboles con física básica
+• **Menús funcionales**: Principal, nueva partida, pausa con navegación completa
+• **Arquitectura cliente-servidor**: Servidor local + cliente para multijugador futuro
+• **Movimiento FPS**: WASD + mouse con rotación restringida
+• **Logging optimizado**: Sistema de depuración completo y archivos de log
+• **Sistema de importación**: Texturas y recursos con reimportación automática
+• **Gestión de mundos**: Creación, carga y eliminación de mundos independientes
+
+REGLA IMPORTANTE DE VERSIONADO
+------------------------------
+• **Solo el usuario puede cambiar de versión** - La IA no debe crear nuevas versiones
+• **Las mejoras se acumulan en la versión actual** hasta que el usuario indique lo contrario
+• **v0.1.3-ALPHA es la versión actual** hasta nueva orden explícita del usuario
 
 ESTRATEGIA DE DESARROLLO: DIVIDE Y VENCERÁS
 -------------------------------------------
@@ -43,6 +61,8 @@ En la carpeta "contexto" se almacenan:
 • resumen.txt (este archivo): visión general del proyecto. Sirve para que una
   conversación nueva pueda "leer el resumen" y adquirir el contexto básico
   sin entrar en detalles técnicos profundos.
+• mundos-y-partidas.txt: sistema completo de gestión de mundos independientes
+• limpieza-archivos.txt: registro de archivos obsoletos eliminados
 • mecanicas.txt: descripción de las mecánicas del juego (recolección,
   crafteo, construcción, inventario, salud, estamina, nutrición,
   hidratación, temperatura corporal).
@@ -70,13 +90,12 @@ para entender el proyecto de un vistazo.
 
 ESTADO ACTUAL DEL PROYECTO
 --------------------------
-• **Versión:** Alpha 0.1.2 (26/02/2026)
-• **Hitos recientes:** Renderizado 3D de árboles GLB con spawn procedural,
-  sistema de importación optimizado, logging limpio.
+• **Versión:** Alpha 0.1.3 (28/02/2026)
+• **Hitos recientes:** Sistema de gestión de mundos independientes implementado
 • **Arquitectura:** Cliente-servidor completa y funcional.
-• **Renderizado:** 10 árboles GLB con escala correcta en mundo 3D.
-• **Sistemas:** Menús, movimiento FPS, logging, backups automatizados.
+• **Mundos:** Creación, carga y eliminación de mundos con directorios propios.
+• **Sistemas:** Menús de mundos, movimiento FPS, logging optimizado, backups automatizados.
 
 ================================================================================
-  Última actualización conceptual: 2026-02-26 - Alpha 0.1.2 con renderizado 3D
+  Última actualización conceptual: 2026-03-01 - Alpha 0.1.3 con gestión de mundos
 ================================================================================

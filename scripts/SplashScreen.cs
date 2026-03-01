@@ -140,7 +140,16 @@ public partial class SplashScreen : Control
         var tween = CreateTween();
         tween.TweenProperty(this, "modulate", Colors.Transparent, FadeDuration);
         tween.TweenCallback(Callable.From(() => {
-            GetTree().ChangeSceneToFile("res://scenes/main_menu.tscn");
+            Logger.Log("SplashScreen: Ejecutando ChangeSceneToFile a main_menu.tscn");
+            try
+            {
+                var result = GetTree().ChangeSceneToFile("res://scenes/main_menu.tscn");
+                Logger.Log($"SplashScreen: ChangeSceneToFile resultado: {result}");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.Log($"SplashScreen: ERROR en ChangeSceneToFile: {ex.Message}");
+            }
         }));
     }
 }

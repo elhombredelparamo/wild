@@ -39,7 +39,7 @@ public partial class GameClient : Node
     private Dictionary<string, RemotePlayer> _remotePlayers = new();
     
     // Configuración
-    private const int Port = 7777;
+    private const int Port = 7778;
     private const string Host = "127.0.0.1";
     
     // Eventos para notificar al GameWorld
@@ -121,7 +121,7 @@ public partial class GameClient : Node
             var message = $"INPUT:movimiento:{direction.X.ToString(CultureInfo.InvariantCulture)},{direction.Y.ToString(CultureInfo.InvariantCulture)},{direction.Z.ToString(CultureInfo.InvariantCulture)}|rotacion:{rotation.X.ToString(CultureInfo.InvariantCulture)},{rotation.Y.ToString(CultureInfo.InvariantCulture)}";
             
             // Debug: mostrar mensaje que se va a enviar
-            Logger.Log($"GameClient: Enviando mensaje: {message}");
+            // Logger.Log($"GameClient: Enviando mensaje: {message}");
             
             var buffer = Encoding.UTF8.GetBytes(message);
             await _stream.WriteAsync(buffer, 0, buffer.Length);

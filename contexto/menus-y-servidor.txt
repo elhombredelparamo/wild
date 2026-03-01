@@ -4,61 +4,41 @@
   Referencia: contexto/resumen.txt para visión general del proyecto.
 ================================================================================
 
-Este archivo describe los menús clásicos del juego y la forma de ejecución
-mediante servidor local (sin multijugador por ahora). La arquitectura
-elegida facilita un posible futuro modo cooperativo o multijugador.
+Este archivo describe los menús del juego y la forma de ejecución mediante
+servidor local. Incluye el nuevo sistema de gestión de personajes y menús
+simplificados.
 
 --------------------------------------------------------------------------------
-1. MENÚS CLÁSICOS
+1. MENÚS DEL JUEGO
 --------------------------------------------------------------------------------
-El juego debe incluir los menús habituales de un juego singleplayer:
 
-• Menú principal (al iniciar el juego)
-  - Iniciar partida (nueva o cargar).
-  - Cargar partida (lista de partidas guardadas).
-  - Opciones / Ajustes (gráficos, audio, controles, etc.).
-  - Salir del juego.
-  
-  **IMPLEMENTADO**: Menú principal funcional con:
-  - Botón "Nueva Partida" que inicia el juego
-  - Botón "Salir" que cierra la aplicación
-  - Sistema de logging para depuración
+MENÚS DE PERSONAJES
+- CharacterSelectMenu: Selección de personajes con lista interactiva
+- CharacterCreateMenu: Creación de nuevos personajes sin límite de longitud
+- Botón "Seleccionar Personaje" en menú principal
+- Eliminación inteligente: siempre queda al menos 1 personaje
+- "jugador" eliminable si hay otros personajes disponibles
+- UI intuitiva con checkboxes y feedback visual
+- Logging completo con Wild.Logger para depuración
 
-• Durante la partida (menú de pausa / escape)
-  - Reanudar.
-  - Guardar partida.
-  - Cargar partida (opcional; puede volver al menú principal para cargar).
-  - Opciones.
-  - Volver al menú principal (con confirmación; opción de guardar antes).
-  - Salir del juego (con confirmación; opción de guardar antes).
-  
-  **IMPLEMENTADO**: Menú de pausa funcional con:
-  - Tecla ESC para mostrar/ocultar
-  - Botón SALIR que vuelve al menú principal
-  - Bloqueo de cámara y movimiento del jugador
-  - El juego NO se pausa (continúa ejecutándose)
-  - Cursor visible para interactuar con el menú
+MENÚS SIMPLIFICADOS
+- NewGameMenu simplificado: elimina campos de personaje, solo muestra personaje actual
+- WorldSelectMenu con info de personaje: muestra "Jugando como: [Nombre]"
+- Botón "Cambiar personaje" en NewGameMenu
+- Validación automática: redirige a selección si no hay personaje
+- Actualización automática al volver de otros menús
+- Flujo unificado con información consistente
 
-• Guardado y cargado de partidas
-  - Guardar: persistir estado del mundo, jugador, inventario, progreso,
-    etc., en disco (uno o varios slots o archivos por partida).
-  - Cargar: restaurar una partida guardada y continuar desde ese estado.
-  - Detalles a definir: formato de guardado, número de slots, nombres
-    de partida, fecha/hora del guardado, posible autoguardado.
+MENÚS CLÁSICOS
+- MainMenu: Menú principal con botones principales
+- OptionsMenu: Configuración del juego
+- PauseMenu: Menú de pausa durante el juego
+- SplashScreen: Pantalla de carga inicial
 
-• Iniciar partida
-  - Nueva partida: mundo nuevo (generación procedural o semilla), jugador
-    en estado inicial.
-  - Cargar partida: ver "Guardado y cargado de partidas".
-  
-  **IMPLEMENTADO**: Sistema de inicio de partida con:
-  - GameFlow que gestiona el flujo entre menús
-  - Escena GameWorld con movimiento FPS básico
-  - Sistema de coordenadas en pantalla
-  - Transición menú principal → partida
-
-Detalles a definir por menú: flujo exacto, textos, idiomas, accesibilidad,
-teclas por defecto.
+FLUJO DE USUARIO
+- MainMenu → CharacterSelectMenu → CharacterCreateMenu → NewGameMenu → WorldSelectMenu → GameWorld
+- Información del personaje mantenida consistentemente entre menús
+- Contexto claro sobre qué personaje está activo en cada momento
 
 --------------------------------------------------------------------------------
 2. MULTIJUGADOR (ESTADO ACTUAL)

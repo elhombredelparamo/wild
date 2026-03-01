@@ -18,19 +18,19 @@ public partial class PauseMenu : Control
         // Obtener referencia al botón
         try {
             _buttonQuit = GetNode<Button>("CenterContainer/Panel/MarginContainer/VBoxContainer/ButtonQuit");
-            Logger.Log("PauseMenu: Botón SALIR encontrado y conectado");
-            Logger.Log($"PauseMenu: Botón visible: {_buttonQuit.Visible}, habilitado: {_buttonQuit.Disabled}");
+            Logger.Log("PauseMenu: Botón SALIR encontrado");
+            
+            // Conectar botón Salir
+            _buttonQuit.Connect(Button.SignalName.Pressed, Callable.From(() => {
+                Logger.Log("PauseMenu: Botón SALIR presionado (vía Connect)");
+                HidePause();
+                GetNode<GameFlow>("/root/GameFlow").ReturnToMainMenu();
+            }));
+            
         } catch (System.Exception ex) {
             Logger.Log($"PauseMenu: ERROR - No se encontró el botón SALIR: {ex.Message}");
             return;
         }
-        
-        // Usar método Connect con lambda (similar a onClick de Java)
-        _buttonQuit.Connect(Button.SignalName.Pressed, Callable.From(() => {
-            Logger.Log("PauseMenu: Botón SALIR presionado (vía Connect)");
-            HidePause();
-            GetNode<GameFlow>("/root/GameFlow").ReturnToMainMenu();
-        }));
         
         Logger.Log("PauseMenu: _Ready() completado con método Connect");
     }
@@ -73,7 +73,7 @@ public partial class PauseMenu : Control
         Visible = true;
         _isPaused = true;
         
-        // Habilitar el botón SALIR
+        // Habilitar el botón
         _buttonQuit.Disabled = false;
         
         // Congelar movimiento del jugador y cámara

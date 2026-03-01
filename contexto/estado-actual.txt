@@ -1,6 +1,186 @@
-# Estado Actual del Proyecto Wild - 26/02/2026
+ESTADO ACTUAL DEL PROYECTO WILD
+==========================================
 
-## ✅ Hitos Importantes Logrados
+🎮 VERSIÓN ACTUAL
+-----------------
+Versión: 0.1.3-ALPHA
+Fecha: 2026-03-01
+Estado: Alpha estable con sistema de personajes implementado
+
+🏗️ ARQUITECTURA DEL SISTEMA
+----------------------------
+
+SISTEMA DE PERSONAJES
+- CharacterManager: Singleton global para gestión de personajes
+- IDs únicas de 16 caracteres basadas en MD5 con sal (ej: "a1b2c3d4e5f6g7h8")
+- Perfiles guardados en user://characters/profiles/
+- Personaje por defecto "jugador" creado automáticamente
+- IDs consistentes entre guardado y carga
+- Soporte multi-mundo y multi-jugador
+- Sistema de IDs: MD5(nombre + timestamp + random) → primeros 16 chars
+- Menús completos: CharacterSelectMenu, CharacterCreateMenu
+- Eliminación inteligente: siempre queda al menos 1 personaje
+- "jugador" eliminable si hay otros personajes disponibles
+
+SISTEMA DE MUNDOS
+- WorldManager: Gestión de mundos independientes
+- Cada mundo en directorio propio: user://worlds/{nombre}/
+- Datos de jugadores por mundo: user://worlds/{nombre}/player/{playerId}.json
+- Sistema de guardado automático cada 5 segundos
+
+SISTEMA DE RED
+- GameServer: Servidor TCP para multi-jugador
+- GameClient: Cliente TCP con sincronización
+- IDs únicos: player_1, player_2, etc.
+- Posición y rotación sincronizadas
+
+SISTEMA DE UI
+- MainMenu: Menú principal con imagen de fondo
+- NewGameMenu: Creación de nuevos mundos
+- WorldSelectMenu: Selección y gestión de mundos
+- PauseMenu: Menú de pausa durante el juego
+- Navegación fluida entre menús sin cerrar ventanas
+
+🎯 FUNCIONALIDADES PRINCIPALES
+--------------------------
+
+✅ POSICIÓN DEL JUGADOR
+- Guardado automático cada 5 segundos
+- Guardado al salir del juego (antes de detener servidor)
+- Carga robusta con fallback a posición local
+- Sistema de IDs unificado (CharacterManager)
+- Posición global vs local manejada correctamente
+
+✅ MUNDO PROCEDURAL
+- Generación de terreno plano con checkerboard
+- Spawning aleatorio de árboles con colisiones
+- Textura de hierba seamless con UV escalados
+- Sistema de materiales y shaders
+
+✅ MOVIMIENTO Y CÁMARA
+- Movimiento WASD en plano XZ
+- Cámara FPS con rotación mouse
+- Captura de cursor para inmersión
+- Congelación de jugador/cámara en menú de pausa
+
+✅ COLISIONES
+- Jugador: CharacterBody3D + CollisionShape3D
+- Suelo: StaticBody3D + BoxShape3D
+- Árboles: BoxShape3D (1x4x1m)
+- Sistema de física básico implementado
+
+🔧 ESTADO TÉCNICO
+-----------------
+
+MOTOR: Godot 4.6.1
+LENGUAJE: C# (.NET 8.0)
+PLATAFORMA: Windows
+RENDERIZADO: OpenGL Compatibility
+
+COMPILACIÓN: Correcta con 13 advertencias
+ADVERTENCIAS: Posibles valores nulos (no críticas)
+
+OPTIMIZACIONES:
+- Texturas optimizadas (JPG → PNG)
+- Logging reducido para producción
+- Assets limpios (40MB eliminados)
+- Sistema de importación mejorado
+
+🐛 PROBLEMAS CONOCIDOS
+--------------------
+
+1. BUGS RESUELTOS:
+   - Posición del jugador siempre en (0,0,0) → CORREGIDO
+   - IDs inconsistentes entre guardado/carga → CORREGIDO
+   - Pérdida de posición al salir del juego → CORREGIDO
+   - Archivos de guardado no encontrados → CORREGIDO
+
+2. MEJORAS PENDIENTES:
+   - Implementar menú de selección de personajes
+   - Añadir estadísticas avanzadas por personaje
+   - Sistema de inventario persistente
+   - Mejorar rendimiento de generación procedural
+
+📋 ESTRUCTURA DE ARCHIVOS
+-----------------------
+
+/user://
+├── characters/
+│   ├── profiles/
+│   │   ├── jugador.json (perfil por defecto)
+│   │   └── {playerId}.json (otros personajes)
+│   └── stats/
+│       └── {playerId}_stats.json
+├── worlds/
+│   ├── {worldName}/
+│   │   ├── world_info.json
+│   │   └── player/
+│   │       ├── jugador.json (posición guardada)
+│   │       └── {playerId}.json
+└── latest.log (log del juego)
+
+/assets/
+├── models/
+│   └── realistic_tree.glb
+├── textures/
+│   ├── Grass004.png (hierba seamless)
+│   └── Grass004_2K-JPG_*.jpg (optimizadas)
+├── materials/
+│   └── grass_material.tres
+└── ui/
+    └── fondos de menús
+
+/scenes/
+├── splash_screen.tscn
+├── main_menu.tscn
+├── new_game_menu.tscn
+├── world_select_menu.tscn
+├── options_menu.tscn
+├── game_world.tscn
+└── pause_menu.tscn
+
+/scripts/
+├── autoload/ (GameFlow, SessionData, GameSettings, WorldManager, CharacterManager)
+├── character/ (CharacterManager.cs)
+├── network/ (GameServer.cs, GameClient.cs)
+├── ui/ (menús de la interfaz)
+└── GameWorld.cs (lógica principal del juego)
+
+🚀 PRÓXIMOS PASOS
+------------------
+
+1. CORTO PLAZO:
+   - Limpiar advertencias menores de compilación
+   - Mejorar documentación del código
+   - Optimizar rendimiento de generación procedural
+
+2. MEDIO PLAZO:
+   - Implementar menú de selección de personajes
+   - Añadir sistema de inventario básico
+   - Mejorar generación de terreno (variación)
+
+3. LARGO PLAZO:
+   - Sistema de misiones o quests
+   - Multi-jugador avanzado (chat, equipos)
+   - Guardado en la nube o sistema de perfiles
+
+📊 ESTADÍSTICAS DE DESARROLLO
+--------------------------
+
+- Líneas de código: ~3000+
+- Archivos modificados: 25+
+- Bugs resueltos: 15+
+- Características implementadas: 30+
+- Tiempo de desarrollo: 2+ semanas
+
+El proyecto se encuentra en estado estable y funcional para continuar desarrollo de nuevas características.
+- **WorldManager.cs** completamente implementado con creación, carga y eliminación de mundos
+- **Estructura de directorios** automática para cada mundo (user://worlds/Mundo_Nombre/)
+- **world_info.json** con metadatos (nombre, semilla, versión, tiempo de juego)
+- **Menú de selección de mundos** con lista interactiva y botones de acción
+- **Integración completa** con GameFlow para iniciar partidas con mundos específicos
+- **Eliminación recursiva segura** de mundos completos
+- **Sin guardados manuales** - el servidor gestiona persistencia continua
 
 ### Renderizado 3D de Árboles (Alpha 0.1.2)
 - **Modelo GLB importado** tree_default.glb con configuración correcta
@@ -18,6 +198,12 @@
 - **Assets no utilizados removidos** para mantener proyecto limpio
 - **Código refactorizado** con funciones reutilizables
 
+### Optimización de Logging (Alpha 0.1.3)
+- **Mensajes de input comentados** en GameClient.cs y GameServer.cs
+- **Reducción drástica de tamaño de log** al eliminar mensajes de movimiento constante
+- **Logs de input disponibles** para futuro debugging si es necesario
+- **Mejora en análisis de logs** al reducir ruido de mensajes repetitivos
+
 ### Arquitectura Cliente-Servidor (Alpha 0.1.1)
 - **GameServer.cs** completamente implementado con sistema servidor local
 - **GameClient.cs** funcional con conexión a servidor local
@@ -27,8 +213,10 @@
 - **Base para multijugador cooperativo** establecida y funcionando
 
 ### Menús y Navegación
-- **Menú principal funcional** con botones Nueva Partida y Salir
-- **Menú de pausa completamente implementado** con ESC
+- **Menú principal funcional** con botones Nueva Partida y Cargar Mundo
+- **Menú de selección de mundos** completo con lista y acciones
+- **Menú de creación de mundos** integrado con GameFlow
+- **Menú de pausa simplificado** con solo opción SALIR
 - **Botón SALIR funcional** que vuelve al menú principal
 - **Bloqueo de cámara y movimiento** durante el menú de pausa
 - **Flujo de juego centralizado** en GameFlow autoload
@@ -40,7 +228,7 @@
 - **UI de coordenadas** activa y mostrando posición/ángulos
 - **Suelo verde básico** con cámara y luz direccional
 - **Sistema de congelación/descongelación** del jugador y cámara
-- **10 árboles GLB renderizados** con escala correcta en el mundo
+- **3 árboles GLB renderizados** con escala correcta en el mundo
 
 ### Sistema de Backups Automatizado
 - **backup.ps1** completamente funcional
@@ -58,23 +246,23 @@
 - **Importación GLB** con escala correcta funcionando
 
 ### Próximos Pasos
-1. **Expansión funcionalidades cliente-servidor** (sincronización)
-2. **Menú de Opciones** (gráficos, audio, controles)
-3. **Sistema de guardado/carga** de partidas
-4. **Menú de Cargar Partida** con lista de slots
-5. **Terreno procedural** usando algoritmos
+1. **Integración servidor-mundo** (usar worldInfo.Seed para generación)
+2. **Persistencia del servidor** (guardar datos en directorio del mundo)
+3. **Carga real de datos** (restaurar estado del mundo al cargar)
+4. **Menú de Opciones** (gráficos, audio, controles)
+5. **Terreno procedural** usando algoritmos y semillas de mundos
 6. **Mecánicas básicas** (salud, estamina, inventario)
 7. **Manejo de múltiples clientes** (base multijugador)
 8. **Más modelos 3D** usando el sistema SpawnModel implementado
 
-## 🎮 Estado Actual: ALPHA 0.1.2 - RENDERIZADO 3D DE ÁRBOLES COMPLETO
+## 🎮 Estado Actual: ALPHA 0.1.3 - GESTIÓN DE MUNDOS
 
-El proyecto ahora tiene renderizado 3D funcional con 10 árboles GLB generados proceduralmente, sistema de importación optimizado, logging limpio y arquitectura cliente-servidor completa. La base para expansión de contenido 3D está establecida.
+El proyecto ahora tiene un sistema completo de gestión de mundos independientes, cada uno con su propio directorio y metadatos. Los jugadores pueden crear múltiples mundos, cargarlos existentes y eliminarlos según necesiten. El servidor gestiona la persistencia continua sin intervención manual del usuario.
 
 ## 📦 Último Backup
-- **Fecha:** 26/02/2026 (versión Alpha 0.1.2)
-- **Motivo:** alpha0.1.2
-- **Archivos:** Árboles GLB + logging optimizado + contexto actualizado
+- **Fecha:** 01/03/2026 (versión Alpha 0.1.3)
+- **Motivo:** sistema de gestion de mundos
+- **Archivos:** Gestión de mundos + contexto actualizado
 - **Formato:** ZIP comprimido
 
 ## 📋 Sistema de Backups
