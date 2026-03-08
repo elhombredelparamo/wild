@@ -1,0 +1,46 @@
+# SISTEMA DE HAMBRE
+
+## Fecha
+2026-03-06 - 14:40
+
+## Descripción
+Implementar sistema de hambre que afecte las capacidades del jugador y requiera alimentación regular.
+
+## Características principales
+- **Barra de hambre:** 0-100 puntos visible en HUD
+- **Decaimiento natural:** Reducción gradual con el tiempo
+- **Factores de consumo:** Actividades aumentan hambre (correr, saltar)
+- **Efectos por niveles:** Diferentes estados según nivel de hambre
+
+## Estados de hambre
+- **100-80:** Saciado - Sin efectos negativos
+- **79-50:** Normal - Funcionamiento estándar
+- **49-25:** Hambriento - Reducción 10% velocidad/stamina
+- **24-10:** Muy hambriento - Reducción 25% velocidad, visión borrosa
+- **9-0:** Moribundo - Reducción 50% velocidad, daño periódico
+
+## Mecánicas de alimentación
+- **Comida:** Items comestibles con valores nutricionales
+- **Tiempo de consumo:** Animación de comer (2-3 segundos)
+- **Valor nutricional:** Recupera puntos de hambre
+- **Bonificaciones:** Algunos alimentos dan efectos temporales
+
+## Integración con sistemas existentes
+- **HUD:** Añadir barra de hambre junto a salud/estamina
+- **Inventario:** Items comestibles con propiedades nutricionales
+- **PlayerController:** Modificar velocidades según hambre
+- **Tiempo juego:** Sistema de día/noche afecta consumo
+
+## Variables configurables
+- **Tasa decaimiento:** 1 punto cada X minutos
+- **Multiplicador actividad:** Esprintar consume 2x hambre
+- **Umbral efectos:** Niveles para activar penalizaciones
+- **Daño por inanición:** Daño cada Y segundos en estado crítico
+
+## Prioridad
+Media - Fundamental para supervivencia y progresión
+
+## Notas
+- Base para sistema de caza/recolección
+- Combinable con sistema de crafteo de comida
+- Puede incluir estado de "demasiado lleno" penalizando

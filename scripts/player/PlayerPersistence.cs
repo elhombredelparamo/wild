@@ -108,10 +108,21 @@ public partial class PlayerPersistence : Node
     /// </summary>
     public void SaveOnExit()
     {
-        if (_playerController != null)
+        try
         {
-            SavePlayerData(_playerController);
-            Logger.Log("PlayerPersistence: Posición guardada al salir del juego");
+            if (_playerController != null && IsInstanceValid(_playerController))
+            {
+                SavePlayerData(_playerController);
+                Logger.Log("PlayerPersistence: Posición guardada al salir del juego");
+            }
+            else
+            {
+                Logger.LogWarning("PlayerPersistence: No se puede guardar al salir - PlayerController es null o inválido");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError($"PlayerPersistence: Error al guardar datos del jugador: {ex.Message}");
         }
     }
     
@@ -139,9 +150,22 @@ public partial class PlayerPersistence : Node
             }
             
             // Obtener posición y rotación actual
-            var position = playerController.GetPlayerPosition();
-            var globalPosition = playerController.GetPlayerGlobalPosition();
-            var angles = playerController.GetCameraAngles();
+            Vector3 position;
+            Vector3 globalPosition;
+            Vector2 angles;
+            
+            try
+            {
+                position = playerController.GetPlayerPosition();
+                globalPosition = playerController.GetPlayerGlobalPosition();
+                angles = playerController.GetCameraAngles();
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"PlayerPersistence: Error al obtener datos del jugador: {ex.Message}");
+                return false;
+            }
+            
             var rotation = new Vector3(angles.X, angles.Y, 0);
             
             // Crear datos del jugador
@@ -291,9 +315,17 @@ public partial class PlayerPersistence : Node
                 // Verificar si la posición global es válida (no es 0,0,0)
                 if (loadedPosition != Vector3.Zero)
                 {
-                    playerController.SetPlayerGlobalPosition(loadedPosition);
-                    positionLoaded = true;
-                    Logger.Log($"PlayerPersistence: Posición global cargada para jugador {playerId}: ({x}, {y}, {z})");
+                    try
+                    {
+                        playerController.SetPlayerGlobalPosition(loadedPosition);
+                        positionLoaded = true;
+                        Logger.Log($"PlayerPersistence: Posición global cargada para jugador {playerId}: ({x}, {y}, {z})");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Logger.LogError($"PlayerPersistence: Error al establecer posición global: {ex.Message}");
+                        positionLoaded = false;
+                    }
                 }
             }
             
@@ -304,8 +336,15 @@ public partial class PlayerPersistence : Node
                 float y = positionProp.GetProperty("y").GetSingle();
                 float z = positionProp.GetProperty("z").GetSingle();
                 
-                playerController.SetPlayerPosition(new Vector3(x, y, z));
-                Logger.Log($"PlayerPersistence: Posición local cargada para jugador {playerId}: ({x}, {y}, {z})");
+                try
+                {
+                    playerController.SetPlayerPosition(new Vector3(x, y, z));
+                    Logger.Log($"PlayerPersistence: Posición local cargada para jugador {playerId}: ({x}, {y}, {z})");
+                }
+                catch (System.Exception ex)
+                {
+                    Logger.LogError($"PlayerPersistence: Error al establecer posición local: {ex.Message}");
+                }
             }
             
             // Cargar rotación
@@ -314,8 +353,15 @@ public partial class PlayerPersistence : Node
                 float yaw = rotationProp.GetProperty("yaw").GetSingle();
                 float pitch = rotationProp.GetProperty("pitch").GetSingle();
                 
-                playerController.SetCameraAngles(yaw, pitch);
-                Logger.Log($"PlayerPersistence: Rotación cargada para jugador {playerId}: Yaw={yaw}, Pitch={pitch}");
+                try
+                {
+                    playerController.SetCameraAngles(yaw, pitch);
+                    Logger.Log($"PlayerPersistence: Rotación cargada para jugador {playerId}: Yaw={yaw}, Pitch={pitch}");
+                }
+                catch (System.Exception ex)
+                {
+                    Logger.LogError($"PlayerPersistence: Error al establecer rotación: {ex.Message}");
+                }
             }
             
             Logger.Log($"PlayerPersistence: ✅ Datos del jugador {playerId} cargados correctamente");

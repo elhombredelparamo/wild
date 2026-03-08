@@ -10,13 +10,17 @@ namespace Wild.Scripts.Terrain
     public partial class Chunk : Node3D
     {
         private ChunkData _data = null!;
-        private MeshInstance3D _meshInstance = null!;
         private StaticBody3D _staticBody = null!;
         private CollisionShape3D _collisionShape = null!;
+        private SubChunk[,] _subChunks = null!;
+        private Vector3 _worldPosition;
         
         // Constantes
-        public const int SIZE = 100;
-        private const float SCALE = 1f; // 1 unidad = 1 metro
+        public const int SIZE = 100; // metros por chunk
+        public const int SUB_CHUNKS_PER_SIDE = 10; // 10x10 sub-chunks
+        public const int SUB_CHUNK_SIZE = 10; // metros por sub-chunk
+        public const int VERTICES_PER_CHUNK = SIZE + 1; // 101 vértices para 100 quads
+        public const float SCALE = 1f; // 1 metro por unidad = 1 metro
         
         public ChunkData Data => _data;
         public Vector2I ChunkPosition { get; private set; }
@@ -28,31 +32,117 @@ namespace Wild.Scripts.Terrain
         }
         
         /// <summary>
-        /// Inicializa el chunk con datos
+        /// Inicializa el chunk con datos y posición mundial
         /// </summary>
-        public void Initialize(ChunkData data)
+        public async Task InitializeAsync(ChunkData data, Vector2I chunkPosition)
         {
             _data = data;
-            ChunkPosition = new Vector2I(data.ChunkX, data.ChunkZ);
-            Name = $"Chunk_{data.ChunkX}_{data.ChunkZ}";
+            ChunkPosition = chunkPosition;
+            Name = $"Chunk_{chunkPosition.X}_{chunkPosition.Y}";
             
-            // Primero crear los componentes necesarios
-            CreateTerrainMesh();
+            // Calcular posición mundial del chunk
+            _worldPosition = new Vector3(
+                chunkPosition.X * SIZE * SCALE,
+                0,
+                chunkPosition.Y * SIZE * SCALE
+            );
             
-            // Luego actualizar el mesh con los datos
-            UpdateTerrainMesh();
+            Position = _worldPosition;
+            
+            // Crear sistema de sub-chunks y colisiones
+            await CreateSubChunkSystemAsync(); // Esperar a que se cree el sistema
+            CreateCollisionSystem();
+            
+            // Generar mallas de sub-chunks
+            GenerateSubChunkMeshes();
+            GenerateSubChunkMeshesAsync();
+            CreateChunkBoundaries();
         }
         
         /// <summary>
-        /// Crea el mesh básico del terreno
+        /// Crea el sistema de sub-chunks para renderizado optimizado (versión síncrona)
         /// </summary>
-        private void CreateTerrainMesh()
+        private void CreateSubChunkSystem()
         {
-            // Crear MeshInstance3D para el terreno
-            _meshInstance = new MeshInstance3D();
-            _meshInstance.Name = "TerrainMesh";
-            AddChild(_meshInstance);
-            
+            try
+            {
+                // Inicializar matriz de sub-chunks
+                _subChunks = new SubChunk[SUB_CHUNKS_PER_SIDE, SUB_CHUNKS_PER_SIDE];
+                
+                // Crear sub-chunks
+                for (int x = 0; x < SUB_CHUNKS_PER_SIDE; x++)
+                {
+                    for (int z = 0; z < SUB_CHUNKS_PER_SIDE; z++)
+                    {
+                        var subChunk = new SubChunk();
+                        var localPos = new Vector2I(x, z);
+                        subChunk.Initialize(localPos, _worldPosition);
+                        AddChild(subChunk);
+                        _subChunks[x, z] = subChunk;
+                    }
+                }
+                
+                Logger.Log($"Chunk: Sistema de sub-chunks creado");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"Chunk: Error en CreateSubChunkSystem(): {ex.Message}");
+                Logger.LogError($"Chunk: Stack trace: {ex.StackTrace}");
+                throw;
+            }
+        }
+        
+        /// <summary>
+        /// Crea el sistema de sub-chunks para renderizado optimizado (versión asíncrona)
+        /// </summary>
+        private async Task CreateSubChunkSystemAsync()
+        {
+            try
+            {
+                // Inicializar matriz de sub-chunks
+                _subChunks = new SubChunk[SUB_CHUNKS_PER_SIDE, SUB_CHUNKS_PER_SIDE];
+                
+                // Crear sub-chunks en background para evitar parones
+                var subChunks = await Task.Run(() =>
+                {
+                    var chunks = new List<(SubChunk chunk, Vector2I localPos)>();
+                    
+                    for (int x = 0; x < SUB_CHUNKS_PER_SIDE; x++)
+                    {
+                        for (int z = 0; z < SUB_CHUNKS_PER_SIDE; z++)
+                        {
+                            var subChunk = new SubChunk();
+                            var localPos = new Vector2I(x, z);
+                            subChunk.Initialize(localPos, _worldPosition);
+                            chunks.Add((subChunk, localPos));
+                        }
+                    }
+                    
+                    return chunks;
+                });
+                
+                // Añadir sub-chunks a la escena en main thread (necesario para Godot)
+                foreach (var (chunk, localPos) in subChunks)
+                {
+                    AddChild(chunk);
+                    _subChunks[localPos.X, localPos.Y] = chunk;
+                }
+                
+                // Logger.Log($"Chunk: Sistema de sub-chunks creado: {SUB_CHUNKS_PER_SIDE}x{SUB_CHUNKS_PER_SIDE} = {SUB_CHUNKS_PER_SIDE * SUB_CHUNKS_PER_SIDE} sub-chunks");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"Chunk: Error en CreateSubChunkSystemAsync(): {ex.Message}");
+                Logger.LogError($"Chunk: Stack trace: {ex.StackTrace}");
+                throw;
+            }
+        }
+        
+        /// <summary>
+        /// Crea el sistema de colisiones para el chunk completo
+        /// </summary>
+        private void CreateCollisionSystem()
+        {
             // Crear StaticBody3D para colisiones del terreno
             _staticBody = new StaticBody3D();
             _staticBody.Name = "TerrainCollision";
@@ -62,15 +152,75 @@ namespace Wild.Scripts.Terrain
             _collisionShape = new CollisionShape3D();
             _collisionShape.Name = "Shape";
             _staticBody.AddChild(_collisionShape);
-            
-            // Crear barreras invisibles alrededor del chunk
-            CreateChunkBoundaries();
-            
-            // Asignar material con textura de hierba
-            var material = new StandardMaterial3D();
-            material.AlbedoTexture = GD.Load<Texture2D>("res://assets/textures/Grass004.png");
-            material.Uv1Scale = new Vector3(10f, 10f, 1f); // Repetir textura
-            _meshInstance.MaterialOverride = material;
+        }
+        
+        /// <summary>
+        /// Genera las mallas de todos los sub-chunks
+        /// </summary>
+        private void GenerateSubChunkMeshes()
+        {
+            try
+            {
+                // Logger.Log($"Chunk: Generando mallas de sub-chunks para chunk {ChunkPosition}");
+                var chunkOffset = new Vector2I(_data.ChunkX, _data.ChunkZ);
+                
+                for (int x = 0; x < SUB_CHUNKS_PER_SIDE; x++)
+                {
+                    for (int z = 0; z < SUB_CHUNKS_PER_SIDE; z++)
+                    {
+                        _subChunks[x, z].GenerateMesh(_data, chunkOffset);
+                    }
+                }
+                
+                // Logger.Log($"Chunk: Mallas de sub-chunks generadas para chunk {ChunkPosition}");
+                
+                // Crear colisiones para el chunk completo
+                _ = CreateCollisionShapeForChunkAsync();
+                
+                // Logger.Log($"Chunk: Colisiones creadas para chunk {ChunkPosition}");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"Chunk: Error en GenerateSubChunkMeshes(): {ex.Message}");
+                Logger.LogError($"Chunk: Stack trace: {ex.StackTrace}");
+                throw;
+            }
+        }
+        
+        /// <summary>
+        /// Genera las mallas de todos los sub-chunks (versión asíncrona)
+        /// </summary>
+        private async Task GenerateSubChunkMeshesAsync()
+        {
+            try
+            {
+                // Logger.Log($"Chunk: Generando mallas de sub-chunks para chunk {ChunkPosition}");
+                var chunkOffset = new Vector2I(_data.ChunkX, _data.ChunkZ);
+                
+                // Generar meshes en background para evitar parones
+                await Task.Run(() =>
+                {
+                    for (int x = 0; x < SUB_CHUNKS_PER_SIDE; x++)
+                    {
+                        for (int z = 0; z < SUB_CHUNKS_PER_SIDE; z++)
+                        {
+                            _subChunks[x, z].GenerateMesh(_data, chunkOffset);
+                        }
+                    }
+                });
+                
+                // Logger.Log($"Chunk: Mallas de sub-chunks generadas para chunk {ChunkPosition}");
+                
+                // Crear colisiones para el chunk completo (en main thread)
+                _ = CreateCollisionShapeForChunkAsync();
+                // Logger.Log($"Chunk: Colisiones creadas para chunk {ChunkPosition}");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"Chunk: Error en GenerateSubChunkMeshesAsync(): {ex.Message}");
+                Logger.LogError($"Chunk: Stack trace: {ex.StackTrace}");
+                throw;
+            }
         }
         
         /// <summary>
@@ -147,42 +297,106 @@ namespace Wild.Scripts.Terrain
         }
         
         /// <summary>
-        /// Actualiza el mesh del terreno con los datos de altura
+        /// Actualiza la visibilidad de los sub-chunks según la distancia al jugador
         /// </summary>
-        private void UpdateTerrainMesh()
+        public void UpdateSubChunkVisibility(Vector3 playerPosition, float renderDistance)
         {
-            if (_data == null) return;
+            float renderDistanceSquared = renderDistance * renderDistance;
             
-            // Crear ArrayMesh para el terreno
-            var arrayMesh = new ArrayMesh();
-            var surfaceTool = new SurfaceTool();
-            
-            surfaceTool.Begin(Mesh.PrimitiveType.Triangles);
-            surfaceTool.SetMaterial(_meshInstance.MaterialOverride);
-            
-            // Generar vértices y triángulos
-            GenerateTerrainVertices(surfaceTool);
-            
-            surfaceTool.Index();
-            surfaceTool.Commit(arrayMesh);
-            
-            // Asignar mesh
-            _meshInstance.Mesh = arrayMesh;
-            
-            // Crear colisiones
-            CreateCollisionShape(arrayMesh);
+            for (int x = 0; x < SUB_CHUNKS_PER_SIDE; x++)
+            {
+                for (int z = 0; z < SUB_CHUNKS_PER_SIDE; z++)
+                {
+                    try
+                    {
+                        var subChunk = _subChunks[x, z];
+                        
+                        // Verificar si el sub-chunk no está disposed
+                        if (subChunk == null || !IsInstanceValid(subChunk))
+                        {
+                            continue;
+                        }
+                        
+                        // Calcular distancia solo en plano XZ (ignorar altura)
+                        Vector3 playerPos2D = new Vector3(playerPosition.X, 0, playerPosition.Z);
+                        Vector3 subChunkCenter2D = new Vector3(subChunk.WorldCenter.X, 0, subChunk.WorldCenter.Z);
+                        float distanceSquared = playerPos2D.DistanceSquaredTo(subChunkCenter2D);
+                        
+                        bool shouldBeVisible = distanceSquared <= renderDistanceSquared;
+                        
+                        if (subChunk.IsSubChunkVisible != shouldBeVisible)
+                        {
+                            subChunk.SetVisible(shouldBeVisible);
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Logger.LogWarning($"Chunk: Error actualizando visibilidad de sub-chunk [{x},{z}]: {ex.Message}");
+                        // Continuar con los demás sub-chunks
+                    }
+                }
+            }
         }
         
         /// <summary>
-        /// Genera los vértices del terreno
+        /// Obtiene el número de sub-chunks visibles
+        /// </summary>
+        public int GetVisibleSubChunkCount()
+        {
+            int count = 0;
+            for (int x = 0; x < SUB_CHUNKS_PER_SIDE; x++)
+            {
+                for (int z = 0; z < SUB_CHUNKS_PER_SIDE; z++)
+                {
+                    if (_subChunks[x, z].IsSubChunkVisible)
+                        count++;
+                }
+            }
+            return count;
+        }
+        
+        /// <summary>
+        /// Crea la forma de colisión para el chunk completo (versión asíncrona)
+        /// </summary>
+        private async Task CreateCollisionShapeForChunkAsync()
+        {
+            try
+            {
+                // Generar mesh completo en background thread
+                var arrayMesh = await Task.Run(() =>
+                {
+                    var st = new SurfaceTool();
+                    st.Begin(Mesh.PrimitiveType.Triangles);
+                    GenerateTerrainVertices(st);
+                    st.Index();
+                    
+                    var mesh = new ArrayMesh();
+                    st.Commit(mesh);
+                    return mesh;
+                });
+
+                // Crear colisiones directamente (esto es rápido en main thread)
+                var collisionShape = arrayMesh.CreateTrimeshShape();
+                _collisionShape.Shape = collisionShape;
+                
+                // Logger.Log($"Chunk: Colisiones asíncronas creadas para chunk {ChunkPosition}");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Chunk: Error en CreateCollisionShapeForChunkAsync(): {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Genera los vértices del terreno completo (solo para colisiones)
         /// </summary>
         private void GenerateTerrainVertices(SurfaceTool surfaceTool)
         {
-            int size = _data.Size;
+            int size = _data.Size; // Ahora es CHUNK_SIZE + 1 = 101
             
-            for (int x = 0; x < size - 1; x++)
+            for (int x = 0; x < size - 1; x++) // 0 a 99 para 100 quads
             {
-                for (int z = 0; z < size - 1; z++)
+                for (int z = 0; z < size - 1; z++) // 0 a 99 para 100 quads
                 {
                     // Obtener alturas de los 4 vértices del quad
                     float h00 = _data.GetHeight(x, z);
@@ -196,28 +410,54 @@ namespace Wild.Scripts.Terrain
                     Vector3 v01 = new Vector3(x * SCALE, h01, (z + 1) * SCALE);
                     Vector3 v11 = new Vector3((x + 1) * SCALE, h11, (z + 1) * SCALE);
                     
+                    // Calcular normales
+                    Vector3 normal = CalculateNormal(v00, v10, v01);
+                    
+                    // Coordenadas UV
+                    Vector2 uv00 = new Vector2(x * 0.1f, z * 0.1f);
+                    Vector2 uv10 = new Vector2((x + 1) * 0.1f, z * 0.1f);
+                    Vector2 uv01 = new Vector2(x * 0.1f, (z + 1) * 0.1f);
+                    Vector2 uv11 = new Vector2((x + 1) * 0.1f, (z + 1) * 0.1f);
+                    
                     // Primer triángulo
+                    surfaceTool.SetNormal(normal);
+                    surfaceTool.SetUV(uv00);
                     surfaceTool.AddVertex(v00);
+                    
+                    surfaceTool.SetNormal(normal);
+                    surfaceTool.SetUV(uv10);
                     surfaceTool.AddVertex(v10);
+                    
+                    surfaceTool.SetNormal(normal);
+                    surfaceTool.SetUV(uv01);
                     surfaceTool.AddVertex(v01);
                     
                     // Segundo triángulo
+                    surfaceTool.SetNormal(normal);
+                    surfaceTool.SetUV(uv10);
                     surfaceTool.AddVertex(v10);
+                    
+                    surfaceTool.SetNormal(normal);
+                    surfaceTool.SetUV(uv11);
                     surfaceTool.AddVertex(v11);
+                    
+                    surfaceTool.SetNormal(normal);
+                    surfaceTool.SetUV(uv01);
                     surfaceTool.AddVertex(v01);
                 }
             }
         }
         
         /// <summary>
-        /// Crea la forma de colisión del terreno
+        /// Calcula la normal de un triángulo para iluminación correcta
         /// </summary>
-        private void CreateCollisionShape(ArrayMesh mesh)
+        private Vector3 CalculateNormal(Vector3 v1, Vector3 v2, Vector3 v3)
         {
-            // Crear colisión convexa para el terreno
-            var collisionShape = mesh.CreateTrimeshShape();
-            _collisionShape.Shape = collisionShape;
+            Vector3 edge1 = v2 - v1;
+            Vector3 edge2 = v3 - v1;
+            return edge1.Cross(edge2).Normalized();
         }
+        
         
         /// <summary>
         /// Libera recursos del chunk

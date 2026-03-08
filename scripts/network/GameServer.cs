@@ -162,8 +162,17 @@ public partial class GameServer : Node
             {
                 var client = await _listener!.AcceptTcpClientAsync();
                 
-                // Crear nuevo jugador con ID único
-                var playerId = $"player_{_nextPlayerId++}";
+                // Recibir ID de personaje del cliente
+                var playerId = await ReceiveCharacterId(client);
+                
+                // Validar que el ID no esté duplicado
+                if (_players.ContainsKey(playerId))
+                {
+                    Logger.LogWarning($"GameServer: ID de personaje duplicado: {playerId}. Cerrando conexión.");
+                    client.Close();
+                    continue;
+                }
+                
                 var playerInfo = new PlayerInfo
                 {
                     PlayerId = playerId,
@@ -391,13 +400,6 @@ public partial class GameServer : Node
         BroadcastPlayerState(playerInfo);
     }
     
-    private async Task SendInitialStateAsync(PlayerInfo playerInfo)
-    {
-        // Enviar ID del jugador junto con el estado inicial
-        var message = $"STATE_INIT:{playerInfo.PlayerId}:{playerInfo.Position.X.ToString(CultureInfo.InvariantCulture)},{playerInfo.Position.Y.ToString(CultureInfo.InvariantCulture)},{playerInfo.Position.Z.ToString(CultureInfo.InvariantCulture)}|{playerInfo.Rotation.X.ToString(CultureInfo.InvariantCulture)},{playerInfo.Rotation.Y.ToString(CultureInfo.InvariantCulture)}";
-        await SendMessageToPlayerAsync(playerInfo, message);
-    }
-    
     private async void SendWorldState(PlayerInfo playerInfo)
     {
         var message = $"STATE_UPDATE:{playerInfo.Position.X.ToString(CultureInfo.InvariantCulture)},{playerInfo.Position.Y.ToString(CultureInfo.InvariantCulture)},{playerInfo.Position.Z.ToString(CultureInfo.InvariantCulture)}|{playerInfo.Rotation.X.ToString(CultureInfo.InvariantCulture)},{playerInfo.Rotation.Y.ToString(CultureInfo.InvariantCulture)}";
@@ -471,4 +473,57 @@ public partial class GameServer : Node
         }
     }
     
+    /// <summary>Recibe el ID de personaje del cliente durante la conexión.</summary>
+    private async Task<string> ReceiveCharacterId(TcpClient client)
+    {
+        try
+        {
+            var stream = client.GetStream();
+            var buffer = new byte[1024];
+            
+            // Esperar a que el cliente envíe su ID de personaje (timeout de 5 segundos)
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, cts.Token);
+            
+            if (bytesRead == 0)
+            {
+                throw new InvalidOperationException("Cliente desconectado antes de enviar ID de personaje");
+            }
+            
+            var characterId = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
+            
+            if (string.IsNullOrEmpty(characterId))
+            {
+                throw new InvalidOperationException("ID de personaje vacío recibido");
+            }
+            
+            Logger.Log($"GameServer: ID de personaje recibido: {characterId}");
+            return characterId;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"GameServer: Error recibiendo ID de personaje: {ex.Message}");
+            throw;
+        }
+    }
+    
+    /// <summary>Envía el estado inicial del servidor a un jugador.</summary>
+    private async Task SendInitialStateAsync(PlayerInfo playerInfo)
+    {
+        try
+        {
+            // Enviar estado inicial con el ID real del personaje
+            var stateMessage = $"STATE_INIT:{playerInfo.PlayerId}:{playerInfo.Position.X.ToString(CultureInfo.InvariantCulture)},{playerInfo.Position.Y.ToString(CultureInfo.InvariantCulture)},{playerInfo.Position.Z.ToString(CultureInfo.InvariantCulture)}|{playerInfo.Rotation.X.ToString(CultureInfo.InvariantCulture)},{playerInfo.Rotation.Y.ToString(CultureInfo.InvariantCulture)}";
+            
+            var messageBytes = Encoding.UTF8.GetBytes(stateMessage);
+            await playerInfo.Stream.WriteAsync(messageBytes, 0, messageBytes.Length);
+            
+            Logger.Log($"GameServer: Estado inicial enviado a {playerInfo.PlayerId}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError($"GameServer: Error enviando estado inicial: {ex.Message}");
+        }
+    }
+
     }

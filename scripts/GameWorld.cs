@@ -4,6 +4,8 @@ using Wild.Scripts.Terrain;
 using Wild.Scripts.Player;
 using Wild.Scripts.UI;
 using Wild.Systems;
+using Wild.Scripts.Character;
+using Wild.WorldEnvironment;
 using FileAccess = Godot.FileAccess;
 
 namespace Wild;
@@ -38,31 +40,41 @@ public partial class GameWorld : Node3D
     // Sistema de spawn de modelos
     private ModelSpawner? _modelSpawner;
     
+    // Sistema de maniquíes
+    private MannequinSpawner _mannequinSpawner;
+    
+    // Sistema de carga dinámica de chunks
+    private DynamicChunkLoader _dynamicChunkLoader;
+    
+    // Referencia directa al singleton para facilitar acceso
+    private DynamicChunkLoader ChunkLoader => DynamicChunkLoader.Instance;
+    
     // Inicializador del mundo
-    private GameWorldInitializer _initializer = null!;
+    private GameWorldInitializer _initializer;
+    
+    // Sistema de entorno del mundo (enfoque oficial Godot 4)
+    private WorldEnvironmentManager? _worldEnvironmentManager;
 
-    public override void _Ready()
+    /// <summary>
+    /// Establece las referencias a los sistemas del juego
+    /// </summary>
+    public void SetSystemsReference(TerrainManager terrain, NetworkManager network, PlayerController player, PlayerPersistence persistence, 
+        CollisionHandler collision, MannequinSpawner mannequin)
     {
-        Logger.Log("🎮 GameWorld: _Ready() INICIADO - ESCENA DEL MUNDO CARGÁNDOSE");
+        _terrainManager = terrain;
+        _networkManager = network;
+        _playerController = player;
+        _playerPersistence = persistence;
+        _collisionHandler = collision;
+        _mannequinSpawner = mannequin;
         
-        // Crear y usar el inicializador
-        _initializer = new GameWorldInitializer(this);
-        _initializer.InitializeGameWorld();
+        // DynamicChunkLoader usa patrón singleton, no necesita referencia
+        _dynamicChunkLoader = DynamicChunkLoader.Instance;
         
-        // Obtener referencias a los sistemas inicializados
-        var systems = _initializer.GetSystems();
-        _terrainManager = systems.terrain;
-        _networkManager = systems.network;
-        _playerController = systems.player;
-        _playerPersistence = systems.persistence;
-        _collisionHandler = systems.collision;
-        
-        // Obtener referencias a UI
-        _player = GetNode<CharacterBody3D>("Player");
-        _camera = GetNode<Camera3D>("Player/Camera3D");
+        // Obtener referencias a UI (ya se obtuvieron en _Ready)
         var labelCoords = GetNode<Label>("UI/LabelCoords");
         
-        // Inicializar el sistema de HUD
+        // Inicializar el sistema de HUD (requiere PlayerController)
         _gameHUD = new GameHUD();
         _gameHUD.Initialize(labelCoords, _playerController, _terrainManager);
         AddChild(_gameHUD);
@@ -71,9 +83,104 @@ public partial class GameWorld : Node3D
         _playerController.PlayerMoved += OnPlayerMoved;
         _playerController.CameraRotated += OnCameraRotated;
         
-        // Inicializar el sistema de spawn de modelos
-        _modelSpawner = new ModelSpawner(this);
-        AddChild(_modelSpawner);
+        // Activar controles siempre (forzar estado correcto)
+        _playerController.SetProcess(true);
+        _playerController.SetPhysicsProcess(true);
+        _playerController.SetProcessInput(true);
+        Input.MouseMode = Input.MouseModeEnum.Captured;
+        Logger.Log("GameWorld: Controles activados en SetSystemsReference() - forzando estado correcto");
+        
+        // Conectar señales del PlayerController para actualización de terrain
+        _playerController.PlayerPositionUpdated += OnPlayerPositionUpdated;
+        Logger.Log($"🎮 GameWorld: Evento PlayerPositionUpdated conectado correctamente");
+        
+        // Forzar actualización inicial de visibilidad de sub-chunks
+        if (_terrainManager != null)
+        {
+            var initialPosition = _playerController.GetPlayerPosition();
+            _terrainManager.UpdateChunksForPlayer(initialPosition);
+            Logger.Log($"🎮 GameWorld: Actualización inicial de sub-chunks en posición {initialPosition}");
+        }
+        
+        Logger.Log("🎮 GameWorld: Sistemas referenciados correctamente");
+    }
+    
+    /// <summary>
+    /// Establece las referencias a los sistemas del juego desde una tupla
+    /// </summary>
+    public void SetSystemsReferenceFromTuple((Wild.Scripts.Terrain.TerrainManager terrain, Wild.Network.NetworkManager network, Wild.Scripts.Player.PlayerController player, Wild.Scripts.Player.PlayerPersistence persistence, 
+        Wild.Systems.CollisionHandler collision, Wild.Scripts.Character.MannequinSpawner mannequin) systems)
+    {
+        SetSystemsReference(systems.terrain, systems.network, systems.player, systems.persistence, 
+            systems.collision, systems.mannequin);
+    }
+
+    public override void _Ready()
+    {
+        Logger.Log("🎮 GameWorld: _Ready() INICIADO - ESCENA DEL MUNDO CARGÁNDOSE");
+        
+        try
+        {
+            // Obtener referencias a los sistemas singleton
+            _terrainManager = TerrainManager.Instance;
+            _networkManager = NetworkManager.Instance;
+            
+            // Obtener referencias a UI
+            _player = GetNode<CharacterBody3D>("Player");
+            _camera = GetNode<Camera3D>("Player/Camera3D");
+            var labelCoords = GetNode<Label>("UI/LabelCoords");
+            
+            // El PlayerController se inicializará a través de GameWorldInitializer
+            // Solo obtener referencia si ya existe
+            _playerController = PlayerController.Instance;
+            
+            // Verificar sistemas esenciales (PlayerController se verificará después de la inicialización)
+            if (_terrainManager != null && _networkManager != null)
+            {
+                Logger.Log("GameWorld: Sistemas singleton esenciales obtenidos correctamente");
+                
+                // El resto de la inicialización se manejará cuando GameWorldInitializer 
+                // llame a SetSystemsReference() después de crear el PlayerController
+                
+                // Inicializar el sistema de spawn de modelos
+                _modelSpawner = new ModelSpawner(this);
+                AddChild(_modelSpawner);
+                
+                // Inicializar el sistema de entorno del mundo (enfoque oficial Godot 4)
+                _worldEnvironmentManager = new WorldEnvironmentManager();
+                AddChild(_worldEnvironmentManager);
+                
+                // Inicializar el sistema de carga dinámica de chunks
+                _initializer = new GameWorldInitializer(this);
+                AddChild(_initializer);
+                _initializer.InitializeGameWorld();
+                
+                Logger.Log("GameWorld: ✅ Mundo del juego inicializado correctamente");
+            
+                // CONECTAR EVENTO PlayerPositionUpdated AQUÍ POR SEGURIDAD
+                if (_playerController != null)
+                {
+                    _playerController.PlayerPositionUpdated += OnPlayerPositionUpdated;
+                    Logger.Log($"🎮 GameWorld: Evento PlayerPositionUpdated conectado en _Ready()");
+                }
+                else
+                {
+                    Logger.LogError("🎮 GameWorld: ERROR - PlayerController es null en _Ready()");
+                }
+            }
+            else
+            {
+                Logger.LogError("GameWorld: ❌ ERROR - Sistemas singleton no disponibles");
+                Logger.LogError($"GameWorld: TerrainManager: {_terrainManager != null}");
+                Logger.LogError($"GameWorld: NetworkManager: {_networkManager != null}");
+                Logger.LogError($"GameWorld: PlayerController: {_playerController != null}");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError($"🎮 GameWorld: ❌ ERROR CRÍTICO en _Ready(): {ex.Message}");
+            Logger.LogError($"🎮 GameWorld: Stack trace: {ex.StackTrace}");
+        }
     }
     
     /// <summary>
@@ -141,6 +248,12 @@ public partial class GameWorld : Node3D
     {
         var dt = (float)delta;
         
+        // Debug: Loggear cada 120 frames (2 segundos) para verificar que _Process se ejecuta
+        // if (Engine.GetFramesDrawn() % 120 == 0)
+        // {
+            // Logger.Log($"GameWorld._Process: Ejecutando - IsNetworkMode: {_networkManager.IsNetworkMode}, PlayerController null: {_playerController == null}");
+        // }
+        
         // Procesar auto-save del jugador
         _playerPersistence.ProcessAutoSave(delta);
         
@@ -150,26 +263,46 @@ public partial class GameWorld : Node3D
         //     Logger.Log($"GameWorld: DEBUG - Posición actual: Jugador Local: {_player.Position}, Jugador Global: {_player.GlobalPosition}");
         // }
         
-        // Movimiento WASD en el plano XZ - SOLO si no está congelado y NO está en modo red
+        // Movimiento WASD en el plano XZ - diferente según modo
         if (!_networkManager.IsNetworkMode)
         {
-            _playerController.ProcessMovement(delta);
+            if (_playerController != null)
+            {
+                _playerController.ProcessMovement(delta);
+            }
+            else
+            {
+                if (Engine.GetFramesDrawn() % 60 == 0)
+                {
+                    Logger.LogError("GameWorld._Process: PlayerController es nulo en modo local");
+                }
+            }
         }
         
         // En modo red, procesar inputs locales y enviar inputs al servidor
         if (_networkManager.IsNetworkMode)
         {
-            _playerController.ProcessMovement(delta);
-            
-            // Ajustar altura al terreno periódicamente
-            if (_terrainManager != null)
+            if (_playerController != null)
             {
-                float terrainHeight = _terrainManager.GetTerrainHeightAt(_playerController.GetPlayerPosition().X, _playerController.GetPlayerPosition().Z);
-                _playerController.AdjustToTerrain(terrainHeight);
+                _playerController.ProcessMovement(delta);
+                
+                // Ajustar altura al terreno periódicamente
+                if (_terrainManager != null)
+                {
+                    float terrainHeight = _terrainManager.GetTerrainHeightAt(_playerController.GetPlayerPosition().X, _playerController.GetPlayerPosition().Z);
+                    _playerController.AdjustToTerrain(terrainHeight);
+                }
+                
+                // Delegar procesamiento de red al NetworkManager
+                _networkManager.ProcessNetworkMovement(_playerController);
             }
-            
-            // Delegar procesamiento de red al NetworkManager
-            _networkManager.ProcessNetworkMovement(_playerController);
+            else
+            {
+                if (Engine.GetFramesDrawn() % 60 == 0)
+                {
+                    Logger.LogError("GameWorld._Process: PlayerController es nulo en modo red");
+                }
+            }
         }
         
         _gameHUD.UpdateCoordinatesDisplay();
@@ -195,6 +328,36 @@ public partial class GameWorld : Node3D
 
 
     
+    /// <summary>
+    /// Maneja actualización de posición del jugador para optimizar renderizado
+    /// </summary>
+    private void OnPlayerPositionUpdated(Vector3 position)
+    {
+        // Log cada 60 actualizaciones (aproximadamente cada segundo) para reducir spam
+        if (Engine.GetFramesDrawn() % 60 == 0)
+        {
+            // Logger.Log($"🎮 GameWorld: Actualizando chunks para jugador en posición: {position}");
+        }
+        
+        // Actualizar visibilidad de sub-chunks según posición del jugador con seguridad
+        try
+        {
+            if (_terrainManager != null)
+            {
+                _terrainManager.UpdateChunksForPlayer(position);
+            }
+            else
+            {
+                Logger.LogError("🎮 GameWorld: TerrainManager es null en OnPlayerPositionUpdated");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError($"🎮 GameWorld: Error en OnPlayerPositionUpdated: {ex.Message}");
+            // No lanzar la excepción para permitir que el juego continúe
+        }
+    }
+    
     /// <summary>Congela el movimiento del jugador y cámara.</summary>
     public void FreezePlayer()
     {
@@ -217,5 +380,34 @@ public partial class GameWorld : Node3D
     public Node3D SpawnModel(string modelPath, Vector3 position, string name = "Model")
     {
         return _modelSpawner?.SpawnModel(modelPath, position, name);
+    }
+    
+    /// <summary>Crea un maniquí en coordenadas específicas usando assets externos.</summary>
+    /// <param name="x">Coordenada X</param>
+    /// <param name="z">Coordenada Z</param>
+    /// <param name="name">Nombre del maniquí (opcional)</param>
+    /// <returns>El nodo contenedor del maniquí o null si falla</returns>
+    public async System.Threading.Tasks.Task<Node3D> SpawnMannequinAsync(float x, float z, string name = "Mannequin")
+    {
+        if (_mannequinSpawner == null)
+        {
+            Logger.LogError("🎮 GameWorld: MannequinSpawner no disponible");
+            return null;
+        }
+        
+        return await _mannequinSpawner.SpawnMannequinAsync(x, z, name);
+    }
+    
+    /// <summary>Crea un maniquí de prueba en coordenadas 50,50.</summary>
+    /// <returns>El nodo contenedor del maniquí o null si falla</returns>
+    public async System.Threading.Tasks.Task<Node3D> SpawnTestMannequinAsync()
+    {
+        if (_mannequinSpawner == null)
+        {
+            Logger.LogError("🎮 GameWorld: MannequinSpawner no disponible");
+            return null;
+        }
+        
+        return await _mannequinSpawner.SpawnTestMannequinAsync();
     }
 }

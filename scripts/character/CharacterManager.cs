@@ -26,6 +26,13 @@ public partial class CharacterManager : Node
     private const string DEFAULT_CHARACTER_ID = "jugador";
     
     private static string _persistentCharacterId = string.Empty;
+    
+    /// <summary>Obtiene o establece el ID del personaje persistente.</summary>
+    public static string PersistentCharacterId 
+    { 
+        get => _persistentCharacterId; 
+        private set => _persistentCharacterId = value; 
+    }
     private readonly JsonSerializerOptions _jsonOptions = new()
     {
         WriteIndented = true,
@@ -72,9 +79,11 @@ public partial class CharacterManager : Node
             // Si no hay personaje seleccionado, usar el primero disponible
             if (CurrentCharacter == null && AllCharacters.Count > 0)
             {
+                Logger.Log($"CharacterManager: No hay personaje seleccionado, usando primero disponible");
                 SelectCharacter(AllCharacters[0].CharacterId);
             }
             
+            Logger.Log($"CharacterManager: Estado final - CurrentCharacter: {(CurrentCharacter?.DisplayName ?? "NULL")}, Total: {AllCharacters.Count}");
         Logger.Log($"CharacterManager: Sistema inicializado con {AllCharacters.Count} personajes");
         }
         catch (Exception ex)
@@ -301,13 +310,16 @@ public partial class CharacterManager : Node
     {
         try
         {
+            Logger.Log($"CharacterManager: Guardando personaje permanente: {characterId}");
+            
             var file = FileAccess.Open(CURRENT_CHARACTER_FILE, FileAccess.ModeFlags.Write);
             if (file != null)
             {
                 file.StoreString(characterId);
                 file.Close();
-                _persistentCharacterId = characterId;
-                Logger.Log($"CharacterManager: Personaje actual guardado permanentemente: {characterId}");
+                PersistentCharacterId = characterId;
+                Logger.Log($"CharacterManager: ✅ Personaje guardado en archivo: {characterId}");
+                Logger.Log($"CharacterManager: ✅ PersistentCharacterId actualizado: {PersistentCharacterId}");
             }
             else
             {
@@ -332,24 +344,35 @@ public partial class CharacterManager : Node
             }
             
             var file = FileAccess.Open(CURRENT_CHARACTER_FILE, FileAccess.ModeFlags.Read);
-            if (file != null)
+            if (file == null)
             {
-                _persistentCharacterId = file.GetAsText().Trim();
-                file.Close();
-                
-                if (!string.IsNullOrEmpty(_persistentCharacterId))
+                Logger.LogError($"CharacterManager: Error al leer archivo permanente: {CURRENT_CHARACTER_FILE}");
+                return;
+            }
+            
+            PersistentCharacterId = file.GetAsText().Trim();
+            file.Close();
+            
+            Logger.Log($"CharacterManager: ID leído desde archivo: '{PersistentCharacterId}'");
+            Logger.Log($"CharacterManager: Personajes disponibles: {AllCharacters.Count}");
+            
+            if (!string.IsNullOrEmpty(PersistentCharacterId))
+            {
+                var savedCharacter = AllCharacters.FirstOrDefault(c => c.CharacterId == PersistentCharacterId);
+                if (savedCharacter != null)
                 {
-                    var savedCharacter = AllCharacters.FirstOrDefault(c => c.CharacterId == _persistentCharacterId);
-                    if (savedCharacter != null)
-                    {
-                        CurrentCharacter = savedCharacter;
-                        Logger.Log($"CharacterManager: Personaje restaurado permanentemente: {_persistentCharacterId} - {savedCharacter.DisplayName}");
-                    }
-                    else
-                    {
-                        Logger.LogWarning($"CharacterManager: No se encontró personaje guardado: {_persistentCharacterId}");
-                    }
+                    CurrentCharacter = savedCharacter;
+                    Logger.Log($"CharacterManager: ✅ Personaje restaurado: {PersistentCharacterId} - {savedCharacter.DisplayName}");
                 }
+                else
+                {
+                    Logger.LogWarning($"CharacterManager: ⚠️ No se encontró personaje con ID: {PersistentCharacterId}");
+                    Logger.Log($"CharacterManager: IDs disponibles: {string.Join(", ", AllCharacters.Select(c => c.CharacterId))}");
+                }
+            }
+            else
+            {
+                Logger.LogWarning("CharacterManager: ⚠️ ID de personaje permanente está vacío");
             }
         }
         catch (Exception ex)
@@ -400,6 +423,44 @@ public partial class CharacterManager : Node
     public string GetCurrentCharacterName()
     {
         return CurrentCharacter?.DisplayName ?? "Jugador";
+    }
+    
+    /// <summary>
+    /// Resetea completamente el singleton CharacterManager
+    /// Limpia estado temporal pero preserva datos de personajes para evitar corrupción entre partidas
+    /// </summary>
+    public static void ResetSingleton()
+    {
+        if (Instance != null)
+        {
+            Logger.Log("CharacterManager: Iniciando ResetSingleton()...");
+            
+            try
+            {
+                // Guardar estado actual antes de resetear (si hay personaje activo)
+                SaveCurrentCharacterState();
+                
+                // NO limpiar AllCharacters - los personajes deben persistir entre partidas
+                // NO limpiar CurrentCharacter - se restaurará desde archivo
+                
+                // Solo limpiar variables temporales si es necesario
+                // Instance.CurrentCharacter = null!; // Comentado - preservar personaje
+                // Instance.AllCharacters.Clear(); // Comentado - preservar lista
+                
+                // NO liberar la instancia del singleton - esto causa que Instance sea null
+                // Instance = null!; // Comentado - mantener instancia para evitar null references
+                
+                Logger.Log("CharacterManager: ✅ ResetSingleton completado - datos de personajes preservados");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"CharacterManager: Error en ResetSingleton: {ex.Message}");
+            }
+        }
+        else
+        {
+            Logger.Log("CharacterManager: ResetSingleton llamado pero no hay instancia activa");
+        }
     }
 }
 

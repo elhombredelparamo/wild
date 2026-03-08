@@ -81,6 +81,20 @@ public partial class GameClient : Node
                 
                 Logger.Log($"GameClient: Conectado al servidor {Host}:{Port}");
                 
+                // Enviar ID del personaje actual al servidor
+                var characterId = CharacterManager.PersistentCharacterId;
+                if (!string.IsNullOrEmpty(characterId))
+                {
+                    var idBytes = Encoding.UTF8.GetBytes(characterId);
+                    await _stream.WriteAsync(idBytes, 0, idBytes.Length);
+                    Logger.Log($"GameClient: ID de personaje enviado al servidor: {characterId}");
+                }
+                else
+                {
+                    Logger.LogError("GameClient: No hay ID de personaje disponible para enviar");
+                    throw new InvalidOperationException("No hay personaje seleccionado para conectar al servidor");
+                }
+                
                 // Iniciar recepción de mensajes en segundo plano
                 _ = Task.Run(ReceiveMessagesAsync, _cancellationToken.Token);
                 

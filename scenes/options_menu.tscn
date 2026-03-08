@@ -155,17 +155,25 @@ layout_mode = 2
 size_flags_vertical = 1
 text = "Distancia de renderizado (metros):"
 
-[node name="SpinRenderDistance" type="SpinBox" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics/VBox/RenderRow"]
-custom_minimum_size = Vector2(100, 0)
+[node name="HSliderRenderDistance" type="HSlider" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics/VBox/RenderRow"]
+custom_minimum_size = Vector2(200, 0)
 layout_mode = 2
-min_value = 25.0
-max_value = 500.0
-value = 150.0
-step = 5.0
+min_value = 10.0
+max_value = 99.0
+value = 50.0
+step = 1.0
 allow_greater = false
 allow_lesser = false
 
 [node name="LabelRenderValue" type="Label" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics/VBox/RenderRow"]
 layout_mode = 2
+custom_minimum_size = Vector2(50, 0)
 size_flags_vertical = 1
-text = "150 m"
+text = "50 m"
+horizontal_alignment = 1
+
+[node name="ButtonSaveGraphics" type="Button" parent="HBox/PanelContent/Margin/ContentStack/PanelGraphics/VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(150, 0)
+size_flags_horizontal = 0
+text = "Guardar cambios"

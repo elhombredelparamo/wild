@@ -1,0 +1,53 @@
+# SISTEMA DE HIDRATACIÓN
+
+## Fecha
+2026-03-06 - 14:40
+
+## Descripción
+Implementar sistema de hidratación que requiera consumo regular de líquidos para mantener al jugador funcional.
+
+## Características principales
+- **Barra de hidratación:** 0-100 puntos visible en HUD
+- **Decaimiento acelerado:** Más rápido que hambre
+- **Factores ambientales:** Clima y actividad afectan consumo
+- **Fuentes de agua:** Ríos, lagos, botellas, lluvia
+
+## Estados de hidratación
+- **100-80:** Hidratado - Sin efectos negativos
+- **79-50:** Normal - Funcionamiento estándar
+- **49-25:** Deshidratado - Reducción 15% stamina, sed visual
+- **24-10:** Muy deshidratado - Reducción 30% velocidad, mareos
+- **9-0:** Agotado - Reducción 50% velocidad, daño continuo
+
+## Mecánicas de bebida
+- **Beber directamente:** En ríos, lagos, fuentes
+- **Recipiente:** Botellas, cantimpleras para transportar agua
+- **Calidad del agua:** Agua potable vs contaminada
+- **Tiempo de bebida:** Animación de beber (1-2 segundos)
+
+## Factores de consumo
+- **Actividad física:** Esprintar y saltar aumentan sed
+- **Temperatura ambiente:** Clima caliente aumenta deshidratación
+- **Hora del día:** Más consumo durante el día
+- **Bioma:** Desiertos y zonas cálidas aumentan necesidad
+
+## Integración con sistemas existentes
+- **HUD:** Barra de hidratación junto a otras barras
+- **Inventario:** Recipientes y bebidas con propiedades
+- **Biomas:** Fuentes de agua según tipo de bioma
+- **Tiempo/clima:** Sistema afecta tasa de consumo
+
+## Variables configurables
+- **Tasa base:** 1 punto cada X minutos
+- **Multiplicador calor:** 2x consumo en biomas cálidos
+- **Multiplicador actividad:** 1.5x durante esprint
+- **Calidad agua:** Agua contaminada causa enfermedades
+
+## Prioridad
+Media - Esencial para supervivencia realista
+
+## Notas
+- Complementario al sistema de hambre
+- Base para sistema de enfermedades futuras
+- Puede incluir recolección de lluvia
+- Interesante para mecánicas de exploración

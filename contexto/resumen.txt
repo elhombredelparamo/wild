@@ -31,6 +31,11 @@ TECNOLOGÍAS
 ESTADO ACTUAL (v0.2.2-ALPHA)
 ----------------------------
 • **Terreno procedural avanzado**: Generación con ruido Perlin y alturas (-100 a 1000m)
+• **Sistema de sub-chunks optimizado**: Cada chunk de 100x100m dividido en 10x10 sub-chunks de 10x10m
+  - SubChunk.cs: Gestión modular de sub-mallas con culling por distancia
+  - Render distance configurable (10-500 metros) con cálculo de distancia solo plano XZ
+  - Terreno continuo sin espacios vacíos entre sub-chunks
+  - Actualización automática de visibilidad según posición del jugador
 • **Sistema de chunks**: Terreno dividido en chunks de 100x100 metros para optimización
 • **Terreno con texturas**: Suelo con textura de hierba seamless y colisiones
 • **Sistema de colisiones**: Jugador, suelo y árboles con física básica
@@ -49,17 +54,26 @@ ESTADO ACTUAL (v0.2.2-ALPHA)
   - Señales: OnPositionUpdated, OnRotationUpdated, OnLocalPlayerIdAssigned
   - CultureInvariant: Parsing numérico robusto
   - Conexiones asíncronas con manejo de errores completo
-  - NetworkManager.cs: Gestión centralizada de red (235 líneas)
+  - NetworkManager.cs: Gestión centralizada de red (250 líneas)
   - Orquesta comunicación entre cliente y servidor
   - Gestión automática de modo red/local
-  - Sincronización de posición y rotación con servidor
+  - Sincronización de posición y rotación con servidor con ajuste automático a terreno
   - Señales: NetworkModeChanged, LocalPlayerIdAssigned, ServerPositionUpdated, ServerRotationUpdated
   - ProcessNetworkMovement(): Procesamiento de inputs en modo red
   - NotifyBlockedPosition(): Notificación de posiciones bloqueadas al servidor
   - Integración directa con PlayerController para aplicar cambios de red
+  - Ajuste automático de altura del jugador al terreno en modo red
+• **🌌 Skybox oficial Godot 4 implementado**: Sistema WorldEnvironment + PanoramaSkyMaterial
+  - WorldEnvironmentManager.cs: Sistema oficial con 120 líneas (vs 184 del antiguo manual)
+  - Textura panorámica cielo.png: Formato 360° perfecto para skybox
+  - IBL (Image-Based Lighting): Reflexiones realistas automáticas
+  - Glow atmosférico: Efectos de iluminación ambiental mejorados
+  - Tonemap Filmic: Mejor calidad visual para escenas HDR
+  - Rendimiento optimizado: Sistema nativo Godot 4 vs 6 planos manuales
+  - Limpieza completa: 11 archivos obsoletos eliminados (SkyboxManager, shaders, texturas no compatibles)
 • **Movimiento FPS**: WASD + mouse con rotación restringida
-  - PlayerController: Sistema modular para movimiento y cámara (250 líneas)
-  - Señales: PlayerMoved, CameraRotated para comunicación
+  - PlayerController: Sistema modular para movimiento y cámara (260 líneas)
+  - Señales: PlayerMoved, CameraRotated, PlayerPositionUpdated para comunicación
   - Modo red: _isNetworkMode para respuesta inmediata
   - Congelación: Freeze(), Unfreeze(), FreezePlayer(), UnfreezePlayer()
   - Posición: GetPlayerPosition(), SetPlayerPosition(), GetPlayerGlobalPosition(), SetPlayerGlobalPosition()
@@ -108,6 +122,18 @@ En la carpeta "contexto" se almacenan:
 • Otros archivos de texto que se irán añadiendo con detalles técnicos,
   convenciones, glosario, estado del proyecto, etc., según haga falta.
 
+CARPETA "TAREAS"
+----------------
+En la carpeta "tareas" se almacenan:
+• Archivos .txt con descripción de tareas pendientes futuras
+• Ideas y conceptos para implementaciones posteriores
+• Banco de creatividad para ciclos de desarrollo futuros
+• Registro organizado de trabajo pendiente por realizar
+• README.md: documentación sobre el propósito y uso de esta carpeta
+
+Diferencia clave: "contexto/" contiene información actual y estable,
+mientras "tareas/" contiene trabajo futuro y pendiente.
+
 CÓMO USAR ESTE RESUMEN
 ----------------------
 En una conversación nueva de contexto, se puede indicar: "lee el resumen.txt"
@@ -123,12 +149,14 @@ para entender el proyecto de un vistazo.
 
 ESTADO ACTUAL DEL PROYECTO
 --------------------------
-• **Versión:** Alpha 0.2.2 (05/03/2026)
-• **Hitos recientes:** Limpieza y refactorización de GameWorld.cs, sincronización de contexto, backup alpha0.2.1 completado
-• **Arquitectura:** Cliente-servidor completa y funcional, GameWorld refactorizado (arquitectura modular completa)
-• **Terreno:** Alturas variables entre -100 y 1000 metros con chunks de 100x100m
-• **Sistemas:** GameWorldInitializer, ModelSpawner (con SpawnModel), CollisionHandler, NetworkManager (235 líneas), PlayerController, PlayerPersistence, TerrainManager, GameFlow (389 líneas), GameFlowExtensions, GameSettings, SessionData, CharacterManager, GameServer (475 líneas), GameClient (527 líneas), procedimientosIA
+• **Versión:** Alpha 0.2.2 (08/03/2026)
+• **Hitos recientes:** Skybox oficial Godot 4 implementado, sistema de sub-chunks optimizado, todos los bugs críticos corregidos
+• **Arquitectura:** Cliente-servidor completa y funcional, GameWorld refactorizado (80% reducido: 1114→222 líneas)
+• **Terreno:** Alturas variables entre -100 y 1000 metros con chunks de 100x100m y sub-chunks de 10x10m
+• **Sistemas:** GameWorldInitializer, ModelSpawner (con SpawnModel), CollisionHandler, NetworkManager (250 líneas), PlayerController (260 líneas), PlayerPersistence, TerrainManager, GameFlow (389 líneas), GameFlowExtensions, GameSettings, SessionData, CharacterManager, GameServer (475 líneas), GameClient (527 líneas), WorldEnvironmentManager (120 líneas), procedimientosIA
+• **Sub-chunks:** SubChunk.cs (191 líneas), sistema de culling por distancia, render distance configurable, terreno continuo
+• **🌌 Skybox:** WorldEnvironmentManager (120 líneas) - Sistema oficial Godot 4 con IBL, glow y textura panorámica
 
 ================================================================================
-  Última actualización conceptual: 2026-03-05 - Alpha 0.2.2 con inicio de nueva versión
+  Última actualización conceptual: 2026-03-08 - Alpha 0.2.2 con skybox oficial Godot 4 implementado y todos los bugs críticos corregidos
 ================================================================================

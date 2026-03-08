@@ -10,23 +10,45 @@ namespace Wild.Scripts.Terrain
 {
     /// <summary>
     /// Gestiona la carga, generación y almacenamiento de chunks
+    /// Patrón Singleton para acceso global desde cualquier escena
     /// </summary>
     public partial class TerrainManager : Node
     {
+        private static TerrainManager _instance;
+        public static TerrainManager Instance => _instance;
+        
+        private bool _isInitialized = false;
         private ChunkGenerator _chunkGenerator;
         private Dictionary<Vector2I, Chunk> _loadedChunks;
         private Dictionary<Vector2I, ChunkData> _chunkDataCache;
         private string _worldDirectory;
+        public string WorldDirectory => _worldDirectory;
         public string ChunksDirectory => _chunksDirectory;
         private string _chunksDirectory;
         
         // Configuración
         public const int CHUNK_SIZE = 100;
-        public const int LOAD_RADIUS = 1; // Cargar 1 chunk alrededor del jugador
+        public const int LOAD_RADIUS = 1; // Cargar 1 chunk alrededor del jugador (obsoleto, usar DynamicChunkLoader)
         public const int CHUNK_CACHE_SIZE = 50; // Máximo chunks en memoria
         
         public override void _Ready()
         {
+            // Patrón singleton - reemplazar instancia existente si es necesario
+            if (_instance == null)
+            {
+                _instance = this;
+            }
+            else if (_instance != this)
+            {
+                Logger.LogWarning("TerrainManager: Instancia duplicada detectada, reemplazando la anterior");
+                // Si hay una instancia anterior, liberarla primero
+                if (IsInstanceValid(_instance))
+                {
+                    _instance.QueueFree();
+                }
+                _instance = this;
+            }
+            
             _chunkGenerator = new ChunkGenerator();
             _chunkGenerator.Name = "ChunkGenerator";
             AddChild(_chunkGenerator);
@@ -45,13 +67,31 @@ namespace Wild.Scripts.Terrain
             _worldDirectory = $"user://worlds/{worldName}";
             _chunksDirectory = $"{_worldDirectory}/chunks";
             
+            // Inicializar ChunkGenerator si no está inicializado
+            if (_chunkGenerator == null)
+            {
+                _chunkGenerator = new ChunkGenerator();
+                _chunkGenerator.Name = "ChunkGenerator";
+                AddChild(_chunkGenerator);
+            }
+            
+            // Inicializar diccionarios si no están inicializados
+            if (_loadedChunks == null)
+            {
+                _loadedChunks = new Dictionary<Vector2I, Chunk>();
+            }
+            if (_chunkDataCache == null)
+            {
+                _chunkDataCache = new Dictionary<Vector2I, ChunkData>();
+            }
+            
             // Crear directorios si no existen
             if (!DirAccess.DirExistsAbsolute(_worldDirectory))
             {
                 var dir = DirAccess.Open("user://");
                 if (dir != null)
                 {
-                    dir.MakeDirRecursive($"worlds/{worldName}");
+                    dir.MakeDir($"worlds/{worldName}");
                 }
             }
             
@@ -68,6 +108,15 @@ namespace Wild.Scripts.Terrain
             
             Logger.Log($"TerrainManager inicializado para mundo: {worldName}");
             Logger.Log($"Directorio de chunks: {_chunksDirectory}");
+            _isInitialized = true;
+        }
+        
+        /// <summary>
+        /// Verifica si el TerrainManager está inicializado
+        /// </summary>
+        public bool IsInitialized()
+        {
+            return _isInitialized;
         }
         
         /// <summary>
@@ -116,7 +165,7 @@ namespace Wild.Scripts.Terrain
         {
             try
             {
-                Logger.Log($"LoadChunk: Cargando chunk en posición {chunkPos}");
+                // Logger.Log($"LoadChunk: Cargando chunk en posición {chunkPos}");
                 
                 // Si ya está cargado, retornarlo
                 if (_loadedChunks.ContainsKey(chunkPos))
@@ -131,28 +180,47 @@ namespace Wild.Scripts.Terrain
                 if (chunkData == null)
                 {
                     Logger.Log($"LoadChunk: Generando nuevo chunk {chunkPos}");
-                    chunkData = _chunkGenerator.GenerateChunk(chunkPos.X, chunkPos.Y);
+                    // Generación en background thread para evitar parones
+                    chunkData = await Task.Run(() => _chunkGenerator.GenerateChunk(chunkPos.X, chunkPos.Y));
                     await SaveChunkData(chunkData);
                 }
                 else
                 {
-                    Logger.Log($"LoadChunk: Chunk {chunkPos} cargado desde disco");
+                    // Logger.Log($"LoadChunk: Chunk {chunkPos} cargado desde disco");
                 }
                 
                 // Crear instancia del chunk
-                Logger.Log($"LoadChunk: Creando instancia de Chunk para {chunkPos}");
+                // Logger.Log($"LoadChunk: Creando instancia de Chunk para {chunkPos}");
+                
                 Chunk chunk = new Chunk();
-                chunk.Initialize(chunkData);
+                await chunk.InitializeAsync(chunkData, chunkPos); // Usar versión asíncrona
                 
                 // Añadir a la escena actual
-                Logger.Log($"LoadChunk: Añadiendo chunk a la escena");
-                GetTree().CurrentScene.AddChild(chunk);
+                var currentScene = GetTree().CurrentScene;
+                if (currentScene != null)
+                {
+                    // Añadir chunk a la escena raíz para persistencia entre cambios de escena
+                    GetTree().Root.AddChild(chunk);
+                    // Logger.Log($"LoadChunk: Chunk {chunkPos} añadido a escena raíz para persistencia - Parent: {chunk.GetParent()?.Name ?? "NULL"}");
+                }
+                else
+                {
+                    Logger.LogError("LoadChunk: CurrentScene es nulo, no se puede añadir chunk");
+                    return null;
+                }
                 _loadedChunks[chunkPos] = chunk;
                 
                 // Actualizar barreras de chunks vecinos
                 UpdateChunkBoundaries(chunkPos);
                 
-                Logger.Log($"LoadChunk: Chunk {chunkPos} cargado exitosamente");
+                // Logger.Log($"LoadChunk: Chunk {chunkPos} cargado exitosamente");
+                
+                // Para chunks nuevos, no esperar a meshes asíncronos para no bloquear
+                if (chunkData.ChunkX == 0 && chunkData.ChunkZ == 0 && !FileAccess.FileExists($"{_chunksDirectory}/chunk_0_0.dat"))
+                {
+                    Logger.Log($"LoadChunk: Chunk inicial detectado, meshes generándose en background");
+                }
+                
                 return chunk;
             }
             catch (System.Exception ex)
@@ -206,6 +274,13 @@ namespace Wild.Scripts.Terrain
         /// </summary>
         private async Task<ChunkData> LoadChunkData(Vector2I chunkPos)
         {
+            // Verificar que _chunksDirectory no sea null
+            if (string.IsNullOrEmpty(_chunksDirectory))
+            {
+                Logger.LogError("TerrainManager: ❌ _chunksDirectory es null en LoadChunkData()");
+                throw new System.Exception("_chunksDirectory no está inicializado - llame a InitializeWorld() primero");
+            }
+            
             string fileName = $"chunk_{chunkPos.X}_{chunkPos.Y}.dat";
             string filePath = Path.Combine(_chunksDirectory, fileName);
             
@@ -265,12 +340,12 @@ namespace Wild.Scripts.Terrain
                 chunk.Dispose();
                 _loadedChunks.Remove(chunkPos);
                 
-                Logger.Log($"Chunk {chunkPos.X},{chunkPos.Y} descargado");
+                // Logger.Log($"Chunk {chunkPos.X},{chunkPos.Y} descargado");
             }
         }
         
         /// <summary>
-        /// Obtiene chunks cargados alrededor de una posición
+        /// Obtiene chunks cargados alrededor de una posición (obsoleto, usar DynamicChunkLoader)
         /// </summary>
         public List<Chunk> GetLoadedChunksAround(Vector2I centerChunk)
         {
@@ -289,6 +364,22 @@ namespace Wild.Scripts.Terrain
             }
             
             return chunks;
+        }
+        
+        /// <summary>
+        /// Obtiene todos los chunks actualmente cargados
+        /// </summary>
+        public Dictionary<Vector2I, Chunk> GetAllLoadedChunks()
+        {
+            return new Dictionary<Vector2I, Chunk>(_loadedChunks);
+        }
+        
+        /// <summary>
+        /// Verifica si un chunk está cargado
+        /// </summary>
+        public bool IsChunkLoaded(Vector2I chunkPos)
+        {
+            return _loadedChunks.ContainsKey(chunkPos);
         }
         
         /// <summary>
@@ -396,6 +487,35 @@ namespace Wild.Scripts.Terrain
         }
         
         /// <summary>
+        /// Actualiza chunks cargados según posición del jugador y render distance
+        /// </summary>
+        public void UpdateChunksForPlayer(Vector3 playerPosition)
+        {
+            // Obtener render distance desde GameSettings
+            var gameSettings = GetNode<GameSettings>("/root/GameSettings");
+            float renderDistance = gameSettings.RenderDistanceMetres;
+            
+            // Actualizar visibilidad de sub-chunks en todos los chunks cargados
+            foreach (var chunk in _loadedChunks.Values)
+            {
+                chunk.UpdateSubChunkVisibility(playerPosition, renderDistance);
+            }
+            
+            // Log de rendimiento - solo cada 60 frames (aproximadamente cada segundo) para reducir spam
+            if (Engine.GetFramesDrawn() % 60 == 0)
+            {
+                int totalSubChunks = _loadedChunks.Count * Chunk.SUB_CHUNKS_PER_SIDE * Chunk.SUB_CHUNKS_PER_SIDE;
+                int visibleSubChunks = 0;
+                foreach (var chunk in _loadedChunks.Values)
+                {
+                    visibleSubChunks += chunk.GetVisibleSubChunkCount();
+                }
+                
+                // Logger.Log($"Render Distance: {renderDistance}m | Sub-chunks visibles: {visibleSubChunks}/{totalSubChunks}");
+            }
+        }
+        
+        /// <summary>
         /// Obtiene la altura del terreno en una posición específica del mundo
         /// </summary>
         /// <param name="worldX">Coordenada X del mundo</param>
@@ -416,6 +536,82 @@ namespace Wild.Scripts.Terrain
                 Logger.LogError($"TerrainManager: Error al obtener altura del terreno: {ex.Message}");
                 return 0f;
             }
-        }    
+        }
+        
+        /// <summary>
+        /// Limpia todos los chunks cargados de memoria
+        /// </summary>
+        public void CleanupAllChunks()
+        {
+            Logger.Log("TerrainManager: Iniciando limpieza de todos los chunks...");
+            
+            try
+            {
+                // Liberar todos los chunks cargados
+                if (_loadedChunks != null)
+                {
+                    foreach (var chunkPair in _loadedChunks)
+                    {
+                        var chunk = chunkPair.Value;
+                        if (chunk != null && IsInstanceValid(chunk))
+                        {
+                            chunk.QueueFree();
+                        }
+                    }
+                    _loadedChunks.Clear();
+                    Logger.Log($"TerrainManager: {_loadedChunks.Count} chunks liberados");
+                }
+                
+                // Limpiar caché de datos
+                if (_chunkDataCache != null)
+                {
+                    _chunkDataCache.Clear();
+                    Logger.Log("TerrainManager: Caché de datos de chunks limpiada");
+                }
+                
+                Logger.Log("TerrainManager: ✅ Limpieza de chunks completada");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"TerrainManager: Error durante limpieza de chunks: {ex.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Resetea el TerrainManager a su estado inicial
+        /// </summary>
+        public void Reset()
+        {
+            Logger.Log("TerrainManager: Reseteando a estado inicial...");
+            
+            try
+            {
+                // Limpiar chunks primero
+                CleanupAllChunks();
+                
+                // Resetear estado de inicialización
+                _isInitialized = false;
+                
+                // Limpiar referencias a directorios
+                _worldDirectory = null;
+                _chunksDirectory = null;
+                
+                // Resetear ChunkGenerator
+                if (_chunkGenerator != null)
+                {
+                    _chunkGenerator.QueueFree();
+                    _chunkGenerator = null;
+                }
+                
+                // NOTA: No resetear el singleton aquí para evitar null references
+                // El singleton se reseteará cuando se cree una nueva instancia
+                
+                Logger.Log("TerrainManager: ✅ Reset completado");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"TerrainManager: Error durante reset: {ex.Message}");
+            }
+        }
     }
 }

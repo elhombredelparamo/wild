@@ -5,9 +5,21 @@ namespace Wild.Scripts.Player;
 
 /// <summary>
 /// Controlador del jugador para movimiento FPS y gestión de cámara
+/// Patrón Singleton para acceso global desde cualquier escena
 /// </summary>
 public partial class PlayerController : Node
 {
+    private static PlayerController? _instance;
+    public static PlayerController Instance => _instance!;
+    
+    /// <summary>
+    /// Establece la instancia singleton (usado por LoadingScene)
+    /// </summary>
+    public static void SetInstance(PlayerController instance)
+    {
+        _instance = instance;
+    }
+    
     // Referencias a componentes del jugador
     private CharacterBody3D _player = null!;
     private Camera3D _camera = null!;
@@ -33,11 +45,39 @@ public partial class PlayerController : Node
     [Signal]
     public delegate void CameraRotatedEventHandler(Vector3 rotation);
     
+    [Signal]
+    public delegate void PlayerPositionUpdatedEventHandler(Vector3 position);
+    
     /// <summary>
     /// Inicializa el controlador con las referencias necesarias
     /// </summary>
     public void Initialize(CharacterBody3D player, Camera3D camera, bool networkMode = false)
     {
+        // Validar referencias
+        if (player == null)
+        {
+            Logger.LogError("PlayerController.Initialize: ERROR - player es nulo");
+            throw new System.ArgumentNullException(nameof(player));
+        }
+        
+        if (camera == null)
+        {
+            Logger.LogError("PlayerController.Initialize: ERROR - camera es nulo");
+            throw new System.ArgumentNullException(nameof(camera));
+        }
+        
+        // Patrón singleton
+        if (_instance == null)
+        {
+            _instance = this;
+        }
+        else if (_instance != this)
+        {
+            Logger.LogWarning("PlayerController: Instancia duplicada detectada, eliminando");
+            QueueFree();
+            return;
+        }
+        
         _player = player;
         _camera = camera;
         _isNetworkMode = networkMode;
@@ -47,7 +87,7 @@ public partial class PlayerController : Node
         _cameraYaw = Mathf.RadToDeg(rot.Y);
         _cameraPitch = Mathf.RadToDeg(rot.X);
         
-        Logger.Log($"PlayerController: Inicializado - Modo red: {_isNetworkMode}");
+        Logger.Log($"PlayerController: Inicializado correctamente - Modo red: {_isNetworkMode}");
     }
     
     /// <summary>
@@ -55,16 +95,24 @@ public partial class PlayerController : Node
     /// </summary>
     public void ProcessMovement(double delta)
     {
-        if (_isFrozen) return;
+        if (_isFrozen) 
+        {
+            return;
+        }
         
         var dt = (float)delta;
         var move = Vector3.Zero;
         
         // Input de movimiento WASD
-        if (Input.IsActionPressed("move_forward")) move += GetCameraForwardXZ();
-        if (Input.IsActionPressed("move_back")) move -= GetCameraForwardXZ();
-        if (Input.IsActionPressed("move_left")) move -= GetCameraRightXZ();
-        if (Input.IsActionPressed("move_right")) move += GetCameraRightXZ();
+        bool forwardPressed = Input.IsActionPressed("move_forward");
+        bool backPressed = Input.IsActionPressed("move_back");
+        bool leftPressed = Input.IsActionPressed("move_left");
+        bool rightPressed = Input.IsActionPressed("move_right");
+        
+        if (forwardPressed) move += GetCameraForwardXZ();
+        if (backPressed) move -= GetCameraForwardXZ();
+        if (leftPressed) move -= GetCameraRightXZ();
+        if (rightPressed) move += GetCameraRightXZ();
         
         if (move.LengthSquared() > 0.001f)
         {
@@ -73,8 +121,9 @@ public partial class PlayerController : Node
             _player.Position = newPosition;
             _player.Velocity = Vector3.Zero;
             
-            // Emitir señal de movimiento
-            EmitSignal(SignalName.PlayerMoved, newPosition);
+            // Emitir señales para otros componentes
+            EmitSignal(SignalName.PlayerMoved, _player.GlobalPosition);
+            EmitSignal(SignalName.PlayerPositionUpdated, _player.GlobalPosition);
         }
         else
         {
@@ -96,11 +145,8 @@ public partial class PlayerController : Node
             // Normalizar yaw a 0-360 grados
             _cameraYaw = Mathf.Wrap(_cameraYaw, 0f, 360f);
             
-            // En modo red, aplicar rotación inmediatamente para respuesta
-            if (_isNetworkMode)
-            {
-                ApplyCameraRotation();
-            }
+            // Aplicar rotación inmediatamente
+            ApplyCameraRotation();
             
             // Emitir señal de rotación
             var rotation = new Vector3(_cameraPitch, _cameraYaw, 0);
@@ -135,7 +181,22 @@ public partial class PlayerController : Node
     /// </summary>
     public void AdjustToTerrain(float terrainHeight)
     {
-        SetPlayerHeight(terrainHeight + CameraHeight);
+        float newHeight = terrainHeight + CameraHeight;
+        
+        // Solo loggear cada 60 frames (1 segundo aprox) para evitar spam
+        if (Engine.GetFramesDrawn() % 60 == 0)
+        {
+            // Logger.Log($"PlayerController.AdjustToTerrain: terrainHeight={terrainHeight:F2}, newHeight={newHeight:F2}");
+            // Logger.Log($"PlayerController.AdjustToTerrain: Posición antes de ajuste: {_player.Position}");
+            // Logger.Log($"PlayerController.AdjustToTerrain: Posición global antes: {_player.GlobalPosition}");
+            // Logger.Log($"PlayerController.AdjustToTerrain: Diferencia altura: {newHeight - _player.Position.Y:F2}");
+            
+            // Logging de posición de cámara comentado para reducir spam
+            // Logger.Log($"PlayerController.AdjustToTerrain: Posición cámara: {_camera.GlobalPosition}");
+            // Logger.Log($"PlayerController.AdjustToTerrain: Rotación cámara: {_camera.GlobalRotation}");
+        }
+        
+        SetPlayerHeight(newHeight);
     }
     
     /// <summary>
@@ -145,7 +206,6 @@ public partial class PlayerController : Node
     {
         _isFrozen = true;
         _isCameraLocked = true;
-        Logger.Log("PlayerController: Jugador y cámara congelados");
     }
     
     /// <summary>
@@ -155,7 +215,6 @@ public partial class PlayerController : Node
     {
         _isFrozen = false;
         _isCameraLocked = false;
-        Logger.Log("PlayerController: Jugador y cámara descongelados");
     }
     
     /// <summary>
@@ -181,6 +240,19 @@ public partial class PlayerController : Node
     /// </summary>
     public void SetPlayerGlobalPosition(Vector3 position)
     {
+        // Verificar que _player no sea null y que el objeto no esté dispuesto
+        if (_player == null)
+        {
+            Logger.LogWarning("PlayerController: SetPlayerGlobalPosition() llamado con _player null");
+            return;
+        }
+        
+        if (!IsInstanceValid(_player))
+        {
+            Logger.LogWarning("PlayerController: SetPlayerGlobalPosition() llamado con _player inválido/disposed");
+            return;
+        }
+        
         _player.GlobalPosition = position;
     }
     
@@ -235,7 +307,6 @@ public partial class PlayerController : Node
     public void FreezePlayer()
     {
         Freeze();
-        Logger.Log("PlayerController: Jugador y cámara congelados");
     }
 
     /// <summary>
@@ -244,6 +315,46 @@ public partial class PlayerController : Node
     public void UnfreezePlayer()
     {
         Unfreeze();
-        Logger.Log("PlayerController: Jugador y cámara descongelados");
+    }
+    
+    /// <summary>
+    /// Resetea completamente el singleton PlayerController
+    /// Limpia todas las referencias y libera la instancia para evitar corrupción entre partidas
+    /// </summary>
+    public static void ResetSingleton()
+    {
+        if (_instance != null)
+        {
+            Logger.Log("PlayerController: Iniciando ResetSingleton()...");
+            
+            try
+            {
+                // Limpiar referencias a componentes
+                _instance._player = null!;
+                _instance._camera = null!;
+                
+                // Resetear estados
+                _instance._isFrozen = false;
+                _instance._isCameraLocked = false;
+                _instance._isNetworkMode = false;
+                
+                // Resetear ángulos de cámara
+                _instance._cameraYaw = 0f;
+                _instance._cameraPitch = 0f;
+                
+                // Liberar la instancia del singleton
+                _instance = null!;
+                
+                Logger.Log("PlayerController: ✅ ResetSingleton completado - singleton liberado");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"PlayerController: Error en ResetSingleton: {ex.Message}");
+            }
+        }
+        else
+        {
+            Logger.Log("PlayerController: ResetSingleton llamado pero no hay instancia activa");
+        }
     }
 }

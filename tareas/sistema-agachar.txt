@@ -1,0 +1,38 @@
+# SISTEMA DE AGACHARSE
+
+## Fecha
+2026-03-06 - 11:58
+
+## Descripción
+Implementar capacidad de agacharse para el jugador, permitiendo ocultación y acceso a espacios reducidos.
+
+## Características propuestas
+- **Activación:** Tecla específica (ej: Ctrl o C)
+- **Estados:** De pie → agachado → de pie
+- **Velocidad:** Reducción de movimiento al estar agachado
+- **Altura:** Reducción del hitbox del jugador
+
+## Mecánicas relacionadas
+- **Ocultación:** Menor detección por enemigos/futuras IA
+- **Acceso:** Poder pasar por espacios bajos
+- **Visión:** Cambio de cámara a altura reducida
+- **Transiciones:** Animaciones suaves entre estados
+
+## Integración con sistemas existentes
+- PlayerController.cs: añadir lógica de agacharse
+- Cámaras: ajuste de altura y ángulo
+- Colisiones: modificación del hitbox
+- Animaciones: transiciones agachar/levantar
+- Audio: efectos de movimiento agachado
+
+## Consideraciones técnicas
+- **Hitbox dinámico:** Cambiar colisionador en tiempo real
+- **Cámara:** Suavizar transición de altura
+- **Red:** Sincronizar estado de agachado en multijugador
+
+## Prioridad
+Media - Mejora jugabilidad y abre posibilidades de sigilo
+
+## Notas
+- Combinable con esprint (esprintar agachado = más lento)
+- Posible agotamiento por mantener posición agachada prolongada

@@ -1,0 +1,124 @@
+================================================================================
+  SISTEMA DE SUB-CHUNKS PARA RENDERIZADO OPTIMIZADO
+================================================================================
+
+FECHA: 2026-03-06
+VERSIÓN: Alpha 0.2.2
+ESTADO: Implementado y funcional
+
+OBJETIVO
+--------
+Optimizar el renderizado del terreno subdividiendo los chunks en sub-chunks más pequeños
+que se activan/desactivan según la distancia del jugador, mejorando el rendimiento.
+
+ARQUITECTURA
+-----------
+• **Chunk (100x100m)**: Contenedor principal con sistema de colisiones completo
+• **SubChunk (10x10m)**: Unidad de renderizado con malla independiente
+• **100 sub-chunks por chunk**: Matriz 10x10 de sub-chunks
+• **Render distance configurable**: 10-500 metros (plano XZ)
+
+IMPLEMENTACIÓN
+--------------
+### SubChunk.cs (191 líneas)
+- **Initialize()**: Configura posición local y mundial, crea MeshInstance3D
+- **GenerateMesh()**: Genera malla procedural con SurfaceTool
+- **SetVisible()**: Controla visibilidad del sub-chunk
+- **IsSubChunkVisible**: Propiedad de estado de visibilidad
+- **WorldCenter**: Centro del sub-chunk para cálculos de distancia
+
+### Chunk.cs (modificado)
+- **CreateSubChunkSystem()**: Inicializa matriz 10x10 de sub-chunks
+- **GenerateSubChunkMeshes()**: Genera mallas de todos los sub-chunks
+- **UpdateSubChunkVisibility()**: Actualiza visibilidad según distancia del jugador
+- **GetVisibleSubChunkCount()**: Contador de sub-chunks visibles
+- **CreateCollisionShapeForChunk()**: Colisiones a nivel de chunk completo
+
+### TerrainManager.cs (extendido)
+- **UpdateChunksForPlayer()**: Itera chunks y actualiza visibilidad de sub-chunks
+- **GetTerrainHeightAt()**: Obtiene altura del terreno para ajuste de jugador
+
+### GameWorld.cs (modificado)
+- **OnPlayerPositionUpdated()**: Conecta señal de posición a actualización de terreno
+- **Actualización inicial**: Fuerza visibilidad de sub-chunks al cargar escena
+
+CARACTERÍSTICAS CLAVE
+-------------------
+### Culling por Distancia
+- **Cálculo 2D**: Solo plano XZ (ignora altura del jugador)
+- **DistanceSquared()**: Evita cálculos de raíz cuadrada
+- **Render distance**: Configurable via GameSettings (20m por defecto para pruebas)
+
+### Terreno Continuo
+- **Vértices compartidos**: Sub-chunks adyacentes comparten bordes
+- **Sin espacios vacíos**: Terreno se muestra como superficie continua
+- **Coordenadas correctas**: Sistema de coordenadas globales para sub-chunks
+
+### Modo Red Compatible
+- **NetworkManager ajustado**: Ajusta altura del jugador al terreno en modo red
+- **Sincronización mantenido**: Posición del servidor ajustada a terreno
+- **Sin conflictos**: Sistema compatible con arquitectura cliente-servidor
+
+OPTIMIZACIONES
+--------------
+### Rendimiento
+- **Solo sub-chunks visibles**: Reducción drástica de polígonos renderizados
+- **Culling eficiente**: DistanceSquared() vs Distance()
+- **Actualización diferida**: Solo cuando jugador se mueve
+
+### Memoria
+- **Mallas bajo demanda**: Sub-chunks generados solo cuando son visibles
+- **Colisiones centralizadas**: Una sola colisión por chunk vs 100 por sub-chunks
+- **MeshInstance3D por sub-chunk**: Control granular de visibilidad
+
+CONFIGURACIÓN
+-----------
+### GameSettings.cs
+```csharp
+DefaultRenderDistanceMetres = 20f;  // Para pruebas
+MinRenderDistanceMetres = 10f;
+MaxRenderDistanceMetres = 99f;
+```
+
+### Uso en Tiempo Real
+- **HUD muestra**: "Render Distance: 20m | Sub-chunks visibles: 14/100"
+- **Logging**: Mensajes de depuración para rendimiento
+- **Actualización automática**: Cada frame según posición del jugador
+
+PROBLEMAS RESUELTOS
+------------------
+### Bugs Críticos Corregidos
+1. **Jugador congelado (0,0,0)**: GameWorldInitializer inicializado correctamente
+2. **Menú pausa no funcional**: Botón salir funciona correctamente
+3. **Ajuste a terreno en modo red**: NetworkManager ajusta altura automáticamente
+4. **Visibilidad inicial**: Terreno visible inmediatamente al cargar
+5. **Espacios vacíos**: Sub-chunks continuos sin huecos
+6. **Cálculo de distancia**: Solo plano XZ, ignora altura
+7. **Conflicto de nombres**: IsVisible → IsSubChunkVisible
+8. **Inicialización MeshInstance3D**: Correcta en Initialize()
+9. **Referencias nulas**: GameWorldInitializer inicializado correctamente
+
+### Mejoras de Rendimiento
+- **Subdivisión inteligente**: 10x10m balance entre granularidad y rendimiento
+- **Culling agresivo**: Solo renderizado dentro de distancia configurable
+- **Optimización matemática**: DistanceSquared() vs Distance()
+
+ESTADO ACTUAL
+-------------
+✅ **Fully implementado**: Sistema completo y funcional
+✅ **Todos los bugs corregidos**: Sin problemas críticos conocidos
+✅ **Rendimiento optimizado**: Mejora significativa vs renderizado completo
+✅ **Compatible con red**: Funciona correctamente en modo cliente-servidor
+✅ **Configurable**: Render distance ajustable via GameSettings
+✅ **Terreno continuo**: Sin espacios vacíos entre sub-chunks
+
+PRÓXIMOS PASOS (Opcional)
+--------------------------
+• **LOD system**: Niveles de detalle para sub-chunks lejanos
+• **Streaming**: Carga/descarga dinámica de chunks
+• **Oclusión**: Culling basado en obstáculos
+• **Batch rendering**: Agrupación de sub-chunks para reducir draw calls
+
+================================================================================
+  Documentación completa del sistema de sub-chunks optimizado
+================================================================================

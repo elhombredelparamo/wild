@@ -2,20 +2,25 @@ using Godot;
 using System.Globalization;
 using Wild.Network;
 using Wild.Scripts.Player;
+using Wild.Scripts.Terrain;
 
 namespace Wild.Network;
 
 /// <summary>
 /// Gestiona toda la funcionalidad de red del juego (cliente-servidor)
+/// Patrón Singleton para acceso global desde cualquier escena
 /// </summary>
 public partial class NetworkManager : Node
 {
+    private static NetworkManager _instance;
+    public static NetworkManager Instance => _instance;
+    
     // Componente de red
     private GameClient _gameClient = null!;
     
-    // Estado de red
+    // Estado de red - se activará cuando el cliente se conecte
     private bool _isNetworkMode = false;
-    private string _localPlayerId = string.Empty;
+    private string _localPlayerId = CharacterManager.PersistentCharacterId ?? string.Empty;
     
     // Sincronización con servidor
     private Vector3 _serverPosition = Vector3.Zero;
@@ -31,6 +36,9 @@ public partial class NetworkManager : Node
     
     // Referencia al PlayerController para aplicar cambios
     private PlayerController _playerController = null!;
+    
+    // Referencia al TerrainManager para ajustar altura
+    private TerrainManager _terrainManager = null!;
     
     // Eventos para comunicación con GameWorld
     [Signal]
@@ -59,28 +67,50 @@ public partial class NetworkManager : Node
     /// </summary>
     public void Initialize()
     {
+        // Patrón singleton
+        if (_instance == null)
+        {
+            _instance = this;
+        }
+        else if (_instance != this)
+        {
+            Logger.LogWarning("NetworkManager: Instancia duplicada detectada, eliminando");
+            QueueFree();
+            return;
+        }
+        
         Logger.Log("NetworkManager: Inicializando sistema de red...");
         
         // Obtener referencia del cliente de red desde GameFlow
         var gameFlow = GetNode<GameFlow>("/root/GameFlow");
-        _gameClient = gameFlow.GetGameClient();
-        
-        Logger.Log($"NetworkManager: Cliente de red obtenido: {_gameClient != null}");
-        
-        if (_gameClient != null && _gameClient.IsConnected)
+        if (gameFlow != null)
         {
-            _isNetworkMode = true;
-            Logger.Log("NetworkManager: 🌐 MODO RED ACTIVADO - conectado al servidor");
-            
-            // Conectar señales del cliente
-            ConnectClientSignals();
-            EmitSignal(SignalName.NetworkModeChanged, true);
+            _gameClient = gameFlow.GetGameClient();
         }
         else
         {
-            Logger.Log("NetworkManager: 🏠 MODO LOCAL - sin conexión de red");
-            EmitSignal(SignalName.NetworkModeChanged, false);
+            Logger.LogError("NetworkManager: GameFlow es nulo, no se puede obtener cliente");
+            return;
         }
+        
+        Logger.Log($"NetworkManager: Cliente de red obtenido: {_gameClient != null}");
+        
+        // Obtener referencia del TerrainManager
+        var gameWorld = GetTree().CurrentScene as GameWorld;
+        if (gameWorld != null)
+        {
+            // El TerrainManager debería estar accesible a través del GameWorld
+            // Por ahora, lo obtenemos del árbol de escena
+            _terrainManager = gameWorld.GetNode<TerrainManager>("TerrainManager");
+            Logger.Log($"NetworkManager: TerrainManager obtenido: {_terrainManager != null}");
+        }
+        else
+        {
+            Logger.LogWarning("NetworkManager: No se pudo obtener GameWorld para TerrainManager");
+        }
+        
+        // No verificar conexión aquí - se hará después de iniciar el servidor y conectar el cliente
+        Logger.Log("NetworkManager: Inicialización completada - esperando conexión del cliente");
     }
     
     /// <summary>
@@ -90,6 +120,33 @@ public partial class NetworkManager : Node
     {
         _playerController = playerController;
         Logger.Log($"NetworkManager: PlayerController establecido: {_playerController != null}");
+    }
+    
+    /// <summary>
+    /// Verifica que el cliente esté conectado al servidor y activa el modo red
+    /// </summary>
+    public void UpdateNetworkMode()
+    {
+        if (_gameClient != null && _gameClient.IsConnected)
+        {
+            bool wasNotNetworkMode = !_isNetworkMode;
+            _isNetworkMode = true;
+            Logger.Log("NetworkManager: ✅ Modo red verificado - cliente conectado");
+            
+            // Conectar señales del cliente si no estaban conectadas
+            ConnectClientSignals();
+            
+            // Emitir señal de cambio de modo si es la primera vez
+            if (wasNotNetworkMode)
+            {
+                EmitSignal(SignalName.NetworkModeChanged, true);
+            }
+        }
+        else
+        {
+            Logger.LogError("NetworkManager: ❌ ERROR CRÍTICO - Cliente no conectado al servidor");
+            throw new System.Exception("Se requiere conexión al servidor para funcionar");
+        }
     }
     
     /// <summary>
@@ -108,14 +165,14 @@ public partial class NetworkManager : Node
     }
     
     /// <summary>
-    /// Procesa el movimiento en modo red y envía inputs al servidor
+    /// Procesa el movimiento (solo si está en modo red)
     /// </summary>
     public void ProcessNetworkMovement(PlayerController playerController)
     {
         if (!_isNetworkMode)
             return;
         
-        // Enviar inputs al servidor
+        // Procesar en modo red
         var playerPos = playerController.GetPlayerPosition();
         var angles = playerController.GetCameraAngles();
         
@@ -191,10 +248,23 @@ public partial class NetworkManager : Node
         _serverPosition = position;
         
         // Aplicar posición directamente al PlayerController
-        if (_playerController != null)
+        if (_playerController != null && _terrainManager != null)
         {
+            // Obtener altura del terreno en la posición del servidor
+            float terrainHeight = _terrainManager.GetTerrainHeightAt(position.X, position.Z);
+            
+            // Ajustar la altura para que el jugador esté sobre el terreno
+            // Usar la altura del terreno directamente (sin +2f adicional)
+            Vector3 adjustedPosition = new Vector3(position.X, terrainHeight + 1.5f, position.Z); // 1.5f = altura del jugador desde los pies
+            
+            _playerController.SetPlayerGlobalPosition(adjustedPosition);
+            Logger.Log($"NetworkManager: Posición sincronizada con servidor y ajustada a terreno: {adjustedPosition}");
+        }
+        else if (_playerController != null)
+        {
+            // Fallback si no hay TerrainManager
             _playerController.SetPlayerGlobalPosition(position);
-            Logger.Log($"NetworkManager: Posición sincronizada con servidor: {position}");
+            Logger.Log($"NetworkManager: Posición sincronizada con servidor (sin ajuste): {position}");
         }
         
         EmitSignal(SignalName.ServerPositionUpdated, position);
@@ -230,5 +300,110 @@ public partial class NetworkManager : Node
     {
         Logger.Log($"NetworkManager: Jugador remoto {playerId} actualizado: pos={position}, rot={rotation}");
         EmitSignal(SignalName.RemotePlayerUpdated, playerId, position, rotation);
+    }
+    
+    /// <summary>
+    /// Resetea el NetworkManager a su estado inicial
+    /// </summary>
+    public void Reset()
+    {
+        Logger.Log("NetworkManager: Reseteando a estado inicial...");
+        
+        try
+        {
+            // Resetear estado de red
+            _isNetworkMode = false;
+            _localPlayerId = string.Empty;
+            
+            // Resetear sincronización
+            _serverPosition = Vector3.Zero;
+            _serverRotation = Vector3.Zero;
+            
+            // Resetear control de envío
+            _lastSentYaw = 0f;
+            _lastSentPitch = 0f;
+            _lastPositionSendTime = 0;
+            
+            // Limpiar referencias (sin liberar los objetos, solo las referencias)
+            _playerController = null!;
+            _terrainManager = null!;
+            
+            // NOTA: No resetear el singleton aquí para evitar null references
+            // El singleton se reseteará cuando se cree una nueva instancia
+            
+            Logger.Log("NetworkManager: ✅ Reset completado");
+        }
+        catch (System.Exception ex)
+        {
+            Logger.LogError($"NetworkManager: Error durante reset: {ex.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Resetea completamente el singleton NetworkManager
+    /// Desconecta eventos y limpia todas las referencias para evitar corrupción entre partidas
+    /// </summary>
+    public static void ResetSingleton()
+    {
+        if (_instance != null)
+        {
+            Logger.Log("NetworkManager: Iniciando ResetSingleton()...");
+            
+            try
+            {
+                // Desconectar eventos del cliente si existe
+                if (_instance._gameClient != null)
+                {
+                    _instance.DisconnectClientSignals();
+                    Logger.Log("NetworkManager: ✅ Eventos del cliente desconectados");
+                }
+                
+                // Limpiar cliente de red
+                _instance._gameClient = null!;
+                
+                // Resetear estado completo
+                _instance.Reset();
+                
+                // Liberar la instancia del singleton
+                _instance = null!;
+                
+                Logger.Log("NetworkManager: ✅ ResetSingleton completado - singleton liberado");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"NetworkManager: Error en ResetSingleton: {ex.Message}");
+            }
+        }
+        else
+        {
+            Logger.Log("NetworkManager: ResetSingleton llamado pero no hay instancia activa");
+        }
+    }
+    
+    /// <summary>
+    /// Desconecta todas las señales del cliente de red
+    /// </summary>
+    private void DisconnectClientSignals()
+    {
+        if (_gameClient != null)
+        {
+            Logger.Log("NetworkManager: Desconectando señales del cliente de red");
+            
+            try
+            {
+                _gameClient.OnPositionUpdated -= OnServerPositionUpdated;
+                _gameClient.OnRotationUpdated -= OnServerRotationUpdated;
+                _gameClient.OnLocalPlayerIdAssigned -= OnLocalPlayerIdAssigned;
+                _gameClient.OnRemotePlayerJoined -= OnRemotePlayerJoined;
+                _gameClient.OnRemotePlayerLeft -= OnRemotePlayerLeft;
+                _gameClient.OnRemotePlayerUpdated -= OnRemotePlayerUpdated;
+                
+                Logger.Log("NetworkManager: ✅ Todas las señales del cliente desconectadas");
+            }
+            catch (System.Exception ex)
+            {
+                Logger.LogError($"NetworkManager: Error al desconectar señales: {ex.Message}");
+            }
+        }
     }
 }

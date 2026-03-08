@@ -3,9 +3,9 @@ ESTADO ACTUAL DEL PROYECTO WILD
 
 🎮 VERSIÓN ACTUAL
 -----------------
-Versión: 0.2.1-ALPHA
-Fecha: 2026-03-03 (inicio desarrollo)
-Estado: Alpha estable - Iniciando desarrollo de nuevas características
+Versión: 0.2.2-ALPHA
+Fecha: 2026-03-06 (desarrollo activo)
+Estado: Alpha estable - Sistema de sub-chunks optimizado implementado
 
 🏗️ ARQUITECTURA DEL SISTEMA
 ----------------------------
@@ -237,10 +237,16 @@ SISTEMA DE DATOS DE SESIÓN
 
 SISTEMA DE CONFIGURACIÓN DEL JUEGO
 - GameSettings: Autoload para opciones del juego (gráficos, controles, etc.)
-- RenderDistanceMetres: Distancia de renderizado configurable (25-500 metros, default 150m)
-- Propiedades: MinRenderDistance (25m), MaxRenderDistance (500m)
-- Persistencia: Pendiente implementación (user://settings.cfg)
+- RenderDistanceMetres: Distancia de renderizado configurable (10-99 metros, default 20m)
+- Propiedades: MinRenderDistance (10m), MaxRenderDistance (99m)
+- Persistencia: Implementada completa en user://settings.cfg
+- LoadSettings(): Carga automática con creación de archivo si no existe
+- CreateDefaultSettings(): Creación automática con valores por defecto
+- HasSectionKey(): Validación robusta de claves antes de cargar
+- Save(): Guardado explícito con ConfigFile de Godot
 - Integración: Sistema modular para configuraciones globales del juego
+- Logger integrado: Sistema de logs unificado para toda la configuración
+- OptionsMenu: Interfaz rediseñada con HSlider y botón de guardado explícito
 
 SISTEMA DE FLUJO DE JUEGO
 - GameFlow: Autoload central para gestión de flujo del juego (389 líneas)
@@ -309,6 +315,11 @@ SISTEMA DE SPAWN DE MODELOS
 ✅ MUNDO PROCEDURAL
 - Generación de terreno con ruido Perlin y alturas variables (-100 a 1000 metros)
 - Sistema de chunks de 100x100 metros para optimización del terreno
+- **SISTEMA DE SUB-CHUNKS OPTIMIZADO**: Cada chunk dividido en 10x10 sub-chunks de 10x10m
+- **SubChunk.cs**: Sistema modular para gestión de sub-mallas con culling por distancia
+- **Render distance configurable**: 10-99 metros con cálculo de distancia solo plano XZ
+- **Terreno continuo**: Sin espacios vacíos entre sub-chunks
+- **Actualización automática**: Visibilidad según posición del jugador
 - Chunk inicial dinámico basado en posición del jugador (no siempre 0,0)
 - GetPlayerChunkPosition() determina chunk desde posición guardada
 - Conversión coordenadas mundo→chunk (divide por 100)
@@ -442,14 +453,16 @@ OPTIMIZACIONES:
 🔥 **Optimizaciones**: LOD para chunks distantes, streaming de terreno
 🔥 **Características avanzadas**: Sistema día/noche, clima, estaciones
 
-## 🎮 Estado Actual: ALPHA 0.2.1 - INICIO DE DESARROLLO
+## 🎮 Estado Actual: ALPHA 0.2.2 - SISTEMA DE SUB-CHUNKS OPTIMIZADO
 
-El proyecto entra en la versión 0.2.1-alpha con base sólida de terreno procedural avanzado mediante ruido Perlin. Se mantiene la estabilidad de la generación de terreno con alturas variables entre -100 y 1000 metros, dividido en chunks de 100x100 metros para optimización. 
+El proyecto entra en la versión 0.2.2-alpha con sistema de sub-chunks optimizado completamente implementado. Terreno procedural avanzado mediante ruido Perlin con subdivisiones de 10x10m para renderizado eficiente. Sistema de configuración gráfica con persistencia completa y nueva interfaz de usuario.
 
 ### 🧠 Modularización Reciente
-- **PlayerController**: Componente modular para movimiento y cámara
-- **PlayerPersistence**: Componente modular para persistencia del jugador
-- **NetworkManager**: Componente modular para gestión de red cliente-servidor
+- **SubChunk.cs**: Sistema modular para gestión de sub-mallas (191 líneas)
+- **GameSettings**: Sistema de configuración con persistencia en settings.cfg
+- **OptionsMenu**: Interfaz rediseñada con HSlider y guardado explícito
+- **PlayerController**: Componente modular para movimiento y cámara (260 líneas)
+- **NetworkManager**: Componente modular para gestión de red cliente-servidor (250 líneas)
 - **GameHUD**: Componente modular para gestión de HUD y coordenadas
 - **ModelSpawner**: Sistema modular para spawn de modelos 3D
 - **GameWorldInitializer**: Sistema modular para inicialización del mundo
@@ -457,8 +470,20 @@ El proyecto entra en la versión 0.2.1-alpha con base sólida de terreno procedu
 - GameWorld.cs: 222 líneas (estado actual tras refactorización)
 - **Arquitectura limpia**: Separación de responsabilidades y reutilización
 
-Listo para nuevas características y mejoras con arquitectura modular y mantenible.
+### 🎮 Mejoras de Interfaz
+- **HSlider horizontal**: Barra de deslizamiento para render distance (10-99m)
+- **Campo de texto dinámico**: Muestra valor en tiempo real junto al slider
+- **Botón "Guardar cambios"**: Control explícito de persistencia
+- **Control preciso**: Step de 1 para ajuste fino
+
+### 💾 Sistema de Configuración
+- **Persistencia robusta**: settings.cfg con ConfigFile de Godot
+- **Carga automática**: Al iniciar con creación si no existe
+- **Validación de claves**: HasSectionKey() para verificar configuración
+- **Logger integrado**: Sistema unificado de logs
+
+Listo para nuevas características y mejoras con arquitectura modular, sistema de sub-chunks optimizado y configuración persistente.
 
 ================================================================================
-Última actualización: 2026-03-05 - Actualizado con PlayerController.cs (250 líneas, sistema de señales)
+Última actualización: 2026-03-06 - Alpha 0.2.2 con sistema de sub-chunks optimizado y configuración gráfica persistente
 ================================================================================

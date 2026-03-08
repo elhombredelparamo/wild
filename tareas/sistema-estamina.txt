@@ -1,0 +1,67 @@
+# SISTEMA DE ESTAMINA
+
+## Fecha
+2026-03-06 - 14:40
+
+## Descripción
+Implementar sistema de estamina para limitar acciones físicas intensas y añadir realismo al movimiento.
+
+## Características principales
+- **Barra de estamina:** 0-100 puntos visible en HUD
+- **Consumo dinámico:** Diferente según actividad
+- **Recuperación rápida:** Más rápida que salud
+- **Estamina máxima:** Puede aumentar con entrenamiento
+
+## Acciones que consumen estamina
+- **Esprintar:** Consumo continuo mientras corre
+- **Saltar:** Costo fijo por cada salto
+- **Ataques:** Consumo por cada acción de combate
+- **Nadar:** Mayor consumo en agua
+- **Cargar objetos:** Transportar peso extra
+
+## Tasas de consumo
+- **Esprintar:** 10 puntos por segundo
+- **Salto:** 15 puntos por salto
+- **Ataque básico:** 5 puntos por golpe
+- **Nadar:** 8 puntos por segundo
+- **Cargar peso:** 2 puntos adicionales por segundo
+
+## Estados de estamina
+- **100-50:** Fresco - Sin penalizaciones
+- **49-25:** Cansado - Reducción 15% velocidad
+- **24-10:** Muy cansado - No puede esprintar, visión borrosa
+- **9-0:** Agotado - Solo puede caminar lento, no puede saltar
+
+## Sistema de recuperación
+- **En reposo:** Recuperación rápida (20 puntos/segundo)
+- **Caminando:** Recuperación media (10 puntos/segundo)
+- **En combate:** Recuperación lenta (5 puntos/segundo)
+- **Descansando:** Sentado/acostado máxima recuperación
+
+## Integración con sistemas existentes
+- **HUD:** Barra de estamina junto a salud/hambre
+- **PlayerController:** Limitar acciones según estamina
+- **Esprint:** Desactivar cuando estamina < 25%
+- **Salto:** Prevenir saltos sin estamina suficiente
+- **Combate:** Consumir estamina en ataques
+
+## Factores modificadores
+- **Estado nutricional:** Hambre/sed afectan recuperación
+- **Equipamiento:** Armadura pesada reduce estamina máxima
+- **Entrenamiento:** Uso continuo aumenta estamina máxima
+- **Condiciones:** Clima caliente aumenta consumo
+
+## Variables configurables
+- **Estamina máxima:** Base 100, mejorable hasta 150
+- **Tasas consumo:** Ajustables por actividad
+- **Velocidad recuperación:** Según estado del jugador
+- **Umbral agotamiento:** Nivel mínimo para acciones
+
+## Prioridad
+Alta - Esencial para movimiento y combate realista
+
+## Notas
+- Fundamental para balance de combate
+- Añade profundidad a exploración
+- Base para sistema de entrenamiento
+- Escalable para mecánicas avanzadas

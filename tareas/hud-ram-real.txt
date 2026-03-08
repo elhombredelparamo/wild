@@ -1,0 +1,56 @@
+# HUD - MOSTRAR CONSUMO DE RAM REAL
+
+## Fecha
+2026-03-06 - 11:59
+
+## Descripción
+Implementar monitor de consumo de memoria RAM en el HUD para visualizar uso de recursos del juego en tiempo real.
+
+## Características propuestas
+- **Contador visual:** Mostrar MB/GB de RAM utilizados
+- **Colores dinámicos:**
+  - Verde: <500 MB (óptimo)
+  - Amarillo: 500MB-1GB (aceptable)
+  - Naranja: 1-2GB (precaución)
+  - Rojo: >2GB (problemas de memoria)
+- **Porcentaje del sistema:** Mostrar % del total disponible
+- **Historial:** Gráfico simple de uso reciente
+
+## Integración con sistemas existentes
+- **HUD actual:** Añadir junto a contador FPS
+- **GameSettings.cs:** Opción para activar/desactivar monitor RAM
+- **Sistema Godot:** Usar OS.get_static_memory_usage() y métodos similares
+- **Menú opciones:** Configuración de visibilidad y unidades
+
+## Consideraciones técnicas
+- **Actualización频率:** Refrescar cada 1-2 segundos (no cada frame)
+- **Precisión:** Mostrar en MB con decimales para granularidad
+- **Posición:** Debajo de contador FPS o esquina inferior
+- **Rendimiento:** Mínimo impacto al obtener datos
+
+## Métricas a mostrar
+- **Memoria actual:** Uso en tiempo real
+- **Pico máximo:** Mayor consumo en sesión actual
+- **Tendencia:** Flecha indicando subida/bajada
+- **Total sistema:** % del disponible en el equipo
+
+## Variables configurables
+- **Visibilidad:** Activado/desactivado
+- **Unidades:** MB/GB automáticas o manual
+- **Umbral colores:** Configurar límites de alerta
+- **Historial:** Tamaño del gráfico de tendencia
+
+## Beneficios
+- **Debug:** Identificar fugas de memoria
+- **Optimización:** Ver impacto de nuevas features
+- **Desarrollo:** Monitorear durante pruebas largas
+- **Usuario:** Información de rendimiento del sistema
+
+## Prioridad
+Media-Alta - Herramienta importante para optimización de memoria
+
+## Notas
+- Complementario al contador FPS
+- Esencial para detectar memory leaks
+- Puede ayudar a ajustar calidad gráfica según hardware disponible
+- Considerar alertas automáticas cuando se excedan límites críticos

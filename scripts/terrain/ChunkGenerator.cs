@@ -38,6 +38,12 @@ namespace Wild.Scripts.Terrain
         /// </summary>
         public void SetSeed(int seed)
         {
+            // Inicializar _noise si no está inicializado
+            if (_noise == null)
+            {
+                InitializeNoise();
+            }
+            
             _noise.Seed = seed;
         }
         
@@ -46,11 +52,18 @@ namespace Wild.Scripts.Terrain
         /// </summary>
         public ChunkData GenerateChunk(int chunkX, int chunkZ)
         {
-            var chunkData = new ChunkData(chunkX, chunkZ, CHUNK_SIZE);
+            var chunkData = new ChunkData(chunkX, chunkZ, CHUNK_SIZE + 1); // +1 para el vértice extra en el borde
             
-            for (int x = 0; x < CHUNK_SIZE; x++)
+            // Logger.Log($"ChunkGenerator: Generando chunk ({chunkX}, {chunkZ})");
+            
+            float minHeight = float.MaxValue;
+            float maxHeight = float.MinValue;
+            int sampleCount = 0;
+            float totalHeight = 0f;
+            
+            for (int x = 0; x < CHUNK_SIZE + 1; x++) // Incluir vértice extra
             {
-                for (int z = 0; z < CHUNK_SIZE; z++)
+                for (int z = 0; z < CHUNK_SIZE + 1; z++) // Incluir vértice extra
                 {
                     // Convertir coordenadas locales a mundiales para el ruido
                     float worldX = chunkX * CHUNK_SIZE + x;
@@ -66,8 +79,17 @@ namespace Wild.Scripts.Terrain
                     float height = Mathf.Lerp(HEIGHT_MIN, HEIGHT_MAX, normalizedValue);
                     
                     chunkData.SetHeight(x, z, height);
+                    
+                    // Estadísticas (sin logging individual para reducir spam)
+                    minHeight = Mathf.Min(minHeight, height);
+                    maxHeight = Mathf.Max(maxHeight, height);
+                    totalHeight += height;
+                    sampleCount++;
                 }
             }
+            
+            float avgHeight = totalHeight / sampleCount;
+            // Logger.Log($"ChunkGenerator: Chunk ({chunkX}, {chunkZ}) - Alturas: min={minHeight:F2}, max={maxHeight:F2}, avg={avgHeight:F2}");
             
             return chunkData;
         }
